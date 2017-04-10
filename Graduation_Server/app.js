@@ -4,10 +4,16 @@ var app = express();
 var contents = require('./routes/contents.js');
 var location = require('./routes/location.js');
 app.use('/', location);
+app.use('/contents',contents);
 
 
+app.get('/', (req,res)=>{
+
+res.send("jwh Server")
+
+})
 
 
-app.listen(3000, function(){
-  console.log('Connected 3000 port!');
+app.listen(8080, function(){
+  console.log('Connected 8080 port!');
 });

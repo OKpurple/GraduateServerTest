@@ -8,6 +8,9 @@ var router = express.Router();
 var conn = mysql.createConnection(db);
 var utils = require('../utils.js')
 
+router.get('/test',(req,res)=>{
+res.send('testPage')
+})
 
 router.get('/',(req,res)=>{
   var sql = 'SELECT * FROM contents';
