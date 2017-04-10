@@ -6,7 +6,7 @@ var db = require('../config/db.js');
 var router = express.Router();
 //var path = process.cwd();
 var conn = mysql.createConnection(db);
-
+var utils = require('../utils.js')
 
 
 router.get('/',(req,res)=>{
@@ -17,9 +17,10 @@ router.get('/',(req,res)=>{
       }else{
         res.json(rows);
       }
-    });
-});
+    })
+})
 
+//user_id = id인 값의 모든 글 보기
 router.get('/:id', function(req, res) {
   var sql = 'SELECT * FROM contents WHERE user_id = ? ORDER BY create_at DESC';
     conn.query(sql ,[req.params.id],(err,rows)=>{
@@ -28,10 +29,11 @@ router.get('/:id', function(req, res) {
       }else{
         res.json(rows);
       }
-    });
-  });
+    })
+  })
 
-  router.post('/:id'), function(req,res){
+  //user_id = id 글 쓰기
+  router.post('/:id', function(req,res){
 
     var userId = req.params.id;
     var contents_text = req.body.text;
@@ -47,10 +49,11 @@ router.get('/:id', function(req, res) {
       }else{
         res.status(200).send('success');
       }
-    });
-  });
+    })
+  })
 
-  router.put('/:contents_id'){
+  //글 수정
+  router.put('/:contents_id',(req,res)=>{
     var userId = req.body.user_id;
     var contents_id = req.params.contents_id;
     var contents_text = req.body.text;
@@ -67,11 +70,11 @@ router.get('/:id', function(req, res) {
       }else{
         res.status(200).send('success');
       }
-    });
-  }
+    })
+  })
 
 
-  router.delete('/:contents_id'){
+  router.delete('/:contents_id',(req,res)=>{
     var contents_id = req.params.contents_id;
 
     var sql = 'DELETE FROM contents WHERE contents_id = ';
@@ -81,9 +84,32 @@ router.get('/:id', function(req, res) {
       }else{
         res.status(200).send('success');
       };
-    });
+    })
 
-  }
+  })
+
+  // get 반경 200미터 유저 검색
+  router.get('/around/:id', (req, res) => {
+      var userId = req.params.id
+      var latitude = req.query.lat;
+      var longitude = req.query.lng;
+
+
+
+      var sql2 = "(SELECT user_id, ( 6371 * acos( cos( radians(?) ) * cos( radians( lat ) )* " +
+          " cos( radians( lng ) - radians(?) ) + sin( radians(?) ) * sin( radians( lat ) ) ) )" +
+          " AS distance FROM user_posi WHERE user_id != ?" +
+          " HAVING distance < 0.2 ORDER BY distance) as around_user";
+
+      var sql1 = 'select * from contents as c inner join' + sql2 + 'on c.user_id = around_user.user_id ORDER BY c.create_at DESC'
+      conn.query(sql, [latitude, longitude, latitude, userId], (err, rows) => {
+              if (err) {
+                    console.log(err);
+              } else {
+                    res.json(utils.toResp(utils.SUCCESS, rows));
+              }
+          })
+  })
 
 
 
