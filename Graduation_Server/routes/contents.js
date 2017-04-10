@@ -1,6 +1,6 @@
 var express = require('express');
 var bodyParser = require('body-parser');
-var currentTimeStamp = require('currentTimeStamp')
+var currentTimeStamp = require('../currentTimeStamp')
 var mysql = require('mysql');
 var db = require('../config/db.js');
 var router = express.Router();

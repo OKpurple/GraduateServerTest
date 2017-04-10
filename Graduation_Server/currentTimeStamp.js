@@ -1,4 +1,4 @@
-module.exports getTimeStamp = function() {
+module.exports.getTimeStamp = function(){
   var d = new Date();
 
   var s =
@@ -25,5 +25,3 @@ function leadingZeros(n, digits) {
   }
   return zero + n;
 }
-
-</script>
