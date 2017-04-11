@@ -5,7 +5,7 @@ var db = require('../config/db.js');
 var conn = mysql.createConnection(db);
 var router = express.Router();
 
-var utils = require('../utils.js')
+
 
 // get 반경 200미터 유저 검색
 router.get('/around/:id', (req, res) => {

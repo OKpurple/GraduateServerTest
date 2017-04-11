@@ -1,16 +1,27 @@
 var express = require('express');
+var app = express();
+var fs = require('fs')
 var bodyParser = require('body-parser');
-var currentTimeStamp = require('../currentTimeStamp')
 var mysql = require('mysql');
 var db = require('../config/db.js');
+var multer = require('multer');
 var router = express.Router();
-//var path = process.cwd();
+router.use(bodyParser.urlencoded({ extended: false }))
+var utils = require('../public/javascripts/utils.js')
 var conn = mysql.createConnection(db);
-var utils = require('../utils.js')
 
-router.get('/test',(req,res)=>{
-res.send('testPage')
+var _storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'files/images')
+  },
+  filename: function (req, file, cb) {
+    cb(null, req.params.id +"-"+ file.originalname +"-"+ req.params.create_at);
+  }
 })
+
+var upload = multer({storage : _storage}).single('contents_image');
+
+
 
 router.get('/',(req,res)=>{
   var sql = 'SELECT * FROM contents';
@@ -38,32 +49,38 @@ router.get('/:id', function(req, res) {
   //user_id = id 글 쓰기
   router.post('/:id', function(req,res){
 
-    var userId = req.params.id;
-    var contents_text = req.body.text;
+    var user_id = req.params.id;
+    var content_text = req.body.content_text;
     var share_range = req.body.share_range;
     var location_range = req.body.location_range;
+    var create_at = utils.getTimeStamp();
 
-    var sql = 'INSERT INTO contents(user_id,contents_text,share_range,location_range)'
-    + 'VALUES (?, ?, ?, ?)';
+    console.log(content_text);
+    req.params.create_at = create_at;
 
-    conn.query(sql,[userId, context_text, share_range, location_range],(err,rows)=>{
+    //upload
+    var sql = 'INSERT INTO contents(user_id,content_text,create_at,share_range,location_range)'
+    + 'VALUES (?, ?, ?, ?,?)';
+
+
+    conn.query(sql,[user_id, content_text,create_at, share_range, location_range],(err,rows)=>{
       if(err){
         console.log(err);
       }else{
         res.status(200).send('success');
       }
-    })
-  })
+    });
+  });
 
   //글 수정
   router.put('/:contents_id',(req,res)=>{
     var userId = req.body.user_id;
     var contents_id = req.params.contents_id;
-    var contents_text = req.body.text;
+    var contents_text = req.body.contents_text;
     var share_range = req.body.share_range;
     var location_range = req.body.location_range;
-    var update_date = currentTimeStamp.getTimeStamp();
-
+    var update_date = utils.getTimeStamp();
+    req.params.create_at = update_date;
     var sql = 'UPDATE contents SET contents_text = ?, share_range = ?, location_range = ?, update_date = ?'
     + 'WHERE contents_id = ?';
 
@@ -91,6 +108,13 @@ router.get('/:id', function(req, res) {
 
   })
 
+
+
+
+
+
+
+
   // get 반경 200미터 유저 검색
   router.get('/around/:id', (req, res) => {
       var userId = req.params.id
@@ -114,6 +138,19 @@ router.get('/:id', function(req, res) {
           })
   })
 
+
+  router.post('/upload/:id',(req,res)=>{
+
+
+    res.status(200).send("success");
+  })
+
+  router.get('/upload/:id',(req,res)=>{
+    var file = fs.createReadStream('./files/contents_image-1491885854216');
+    console.log("access");
+    file.pipe(res);
+
+  })
 
 
 module.exports = router;
