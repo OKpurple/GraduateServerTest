@@ -1,27 +1,22 @@
 var express = require('express');
-var app = express();
 var fs = require('fs')
-var bodyParser = require('body-parser');
+
 var mysql = require('mysql');
 var db = require('../config/db.js');
+var conn = mysql.createConnection(db);
+
 var multer = require('multer');
 var router = express.Router();
-router.use(bodyParser.urlencoded({ extended: false }))
 var utils = require('../public/javascripts/utils.js')
-var conn = mysql.createConnection(db);
 
 var _storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, 'files/images')
   },
   filename: function (req, file, cb) {
-    cb(null, req.params.id +"-"+ file.originalname +"-"+ req.params.create_at);
+    cb(null, req.params.id +"-"+req.params.create_at+".png");
   }
-})
-
-var upload = multer({storage : _storage}).single('contents_image');
-
-
+});
 
 router.get('/',(req,res)=>{
   var sql = 'SELECT * FROM contents';
@@ -36,7 +31,11 @@ router.get('/',(req,res)=>{
 
 //user_id = id인 값의 모든 글 보기
 router.get('/:id', function(req, res) {
-  var sql = 'SELECT * FROM contents WHERE user_id = ? ORDER BY create_at DESC';
+
+
+
+  var sql = 'SELECT c.*, u.user_name FROM contents c, user_info u WHERE c.user_id = ?'
+  +' &&  c.user_id = u.user_id ORDER BY c.create_at DESC';
     conn.query(sql ,[req.params.id],(err,rows)=>{
       if(err){
         console.log(err);
@@ -46,31 +45,53 @@ router.get('/:id', function(req, res) {
     })
   })
 
+
+
+
   //user_id = id 글 쓰기
   router.post('/:id', function(req,res){
-
-    var user_id = req.params.id;
-    var content_text = req.body.content_text;
-    var share_range = req.body.share_range;
-    var location_range = req.body.location_range;
     var create_at = utils.getTimeStamp();
+    var upload = multer({storage : _storage}).single('contents_image');
 
-    console.log(content_text);
     req.params.create_at = create_at;
 
-    //upload
-    var sql = 'INSERT INTO contents(user_id,content_text,create_at,share_range,location_range)'
-    + 'VALUES (?, ?, ?, ?,?)';
+    upload(req,res,(err)=>{
+      var user_id = req.params.id;
+      var content_text = req.body.content_text;
+      var share_range = req.body.share_range;
+      var location_range = req.body.location_range;
+      var image_dir = '/image/'+user_id + "-" + create_at + ".png";
+
+      var has_image = req.body.has_image;
+      //upload
+      if(has_image == 1){
+      var sql = 'INSERT INTO contents(user_id,content_text,create_at,share_range,location_range,image_dir)'
+      + 'VALUES (?, ?, ?, ?,?,?)';
 
 
-    conn.query(sql,[user_id, content_text,create_at, share_range, location_range],(err,rows)=>{
-      if(err){
-        console.log(err);
-      }else{
-        res.status(200).send('success');
-      }
-    });
+      conn.query(sql,[user_id, content_text,create_at, share_range, location_range,image_dir],(err,rows)=>{
+        if(err){
+          console.log(err);
+        }else{
+          res.status(200).send('success');
+        }
+      });
+    }else{
+      var sql = 'INSERT INTO contents(user_id,content_text,create_at,share_range,location_range)'
+      + 'VALUES (?, ?, ?, ?,?)';
+      conn.query(sql,[user_id, content_text,create_at, share_range, location_range],(err,rows)=>{
+        if(err){
+          console.log(err);
+        }else{
+          res.status(200).send('success');
+        }
+      });
+
+    }
+    })
   });
+
+
 
   //글 수정
   router.put('/:contents_id',(req,res)=>{
@@ -135,22 +156,17 @@ router.get('/:id', function(req, res) {
               } else {
                     res.json(utils.toResp(utils.SUCCESS, rows));
               }
-          })
-  })
+          });
+  });
 
 
-  router.post('/upload/:id',(req,res)=>{
 
 
-    res.status(200).send("success");
-  })
-
-  router.get('/upload/:id',(req,res)=>{
-    var file = fs.createReadStream('./files/contents_image-1491885854216');
-    console.log("access");
-    file.pipe(res);
-
-  })
-
+  // router.get('/upload/:id',(req,res)=>{
+  //   var file = fs.createReadStream('./files/images');
+  //   console.log("access");
+  //   file.pipe(res);
+  //
+  // })
 
 module.exports = router;
