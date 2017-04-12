@@ -18,9 +18,64 @@ var _storage = multer.diskStorage({
   }
 });
 
-router.get('/',(req,res)=>{
-  var sql = 'SELECT * FROM contents';
+
+router.post('/like',(req,res)=>{
+  var user_id = req.body.user_id;
+  var contents_id = req.body.content_id;
+  var is_like = req.is_like;
+ var sql; 
+
+ if(is_like == 0){
+  sql = 'INSERT INTO content_like(user_id,content_id,is_like) VALUES(?,?,?)';
+  conn.query(sql,[user_id,content_id,is_like],(err,rows)=>{
+  if(err){
+  console.log(err)  
+}else{
+res.status(200).send('success');
+}
+})
+  }else{
+  sql = 'DELETE content_like where content_id = ?, user_id = ?';
+  conn.query(sql,[content_id, user_id],(err,rows)=>{
+  if(err){
+	console.log(err);
+}else{
+res.status(200).send('delete');
+}
+
+})  
+
+}
+
+})
+
+router.get('/all',(req,res)=>{
+
+  var user_id=req.body.user_id;
+  var sql = 'SELECT c.*, u.user_name'
+  +' FROM user_info u,contents c'
+  +' WHERE u.user_id=c.user_id'
+
     conn.query(sql,(err,rows)=>{
+      if(err){
+        console.log(err);
+      }else{
+        res.json(rows);
+      }
+    })
+})
+
+router.get('/',(req,res)=>{
+
+  var user_id=req.body.user_id;
+console.log(user_id); 
+ var sql = 'SELECT c.*, u.user_name,cl.is_like'
+  +' FROM user_info u,contents c'
+  +' LEFT OUTER JOIN content_like cl'
+  +' ON cl.content_id = c.content_id && cl.user_id = ?'
+  +' WHERE u.user_id=c.user_id'
+
+    conn.query(sql,[user_id],(err,rows)=>{
       if(err){
         console.log(err);
       }else{

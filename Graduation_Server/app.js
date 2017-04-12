@@ -39,7 +39,7 @@ app.get('/insertContents',(req,res)=>{
   var output = `
 <html>
 <body>
-   <form method="post" action="contents/5" enctype= multipart/form-data>
+   <form method="post" action="contents/7" enctype= multipart/form-data>
    <h1>has_image 1or0 </h1>
        <input type="text" name = 'has_image'>
       <h1>내용</h1>
