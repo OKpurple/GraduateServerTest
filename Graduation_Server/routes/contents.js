@@ -14,6 +14,7 @@ var _storage = multer.diskStorage({
     cb(null, 'files/images')
   },
   filename: function (req, file, cb) {
+
     cb(null, req.params.id +"-"+req.params.create_at+".png");
   }
 });
@@ -23,13 +24,13 @@ router.post('/like',(req,res)=>{
   var user_id = req.body.user_id;
   var contents_id = req.body.content_id;
   var is_like = req.is_like;
- var sql; 
+ var sql;
 
  if(is_like == 0){
   sql = 'INSERT INTO content_like(user_id,content_id,is_like) VALUES(?,?,?)';
   conn.query(sql,[user_id,content_id,is_like],(err,rows)=>{
   if(err){
-  console.log(err)  
+  console.log(err)
 }else{
 res.status(200).send('success');
 }
@@ -43,7 +44,7 @@ res.status(200).send('success');
 res.status(200).send('delete');
 }
 
-})  
+})
 
 }
 
@@ -68,7 +69,7 @@ router.get('/all',(req,res)=>{
 router.get('/',(req,res)=>{
 
   var user_id=req.body.user_id;
-console.log(user_id); 
+console.log(user_id);
  var sql = 'SELECT c.*, u.user_name,cl.is_like'
   +' FROM user_info u,contents c'
   +' LEFT OUTER JOIN content_like cl'
@@ -106,16 +107,20 @@ router.get('/:id', function(req, res) {
   //user_id = id 글 쓰기
   router.post('/:id', function(req,res){
     var create_at = utils.getTimeStamp();
+    var crdate = utils.getTimeDate();
+    var crtime = utils.getTimeTime();
+    var cr = crdate+crtime;
+    console.log(cr);
     var upload = multer({storage : _storage}).single('contents_image');
 
-    req.params.create_at = create_at;
+    req.params.create_at = cr;
 
     upload(req,res,(err)=>{
       var user_id = req.params.id;
       var content_text = req.body.content_text;
       var share_range = req.body.share_range;
       var location_range = req.body.location_range;
-      var image_dir = '/image/'+user_id + "-" + create_at + ".png";
+      var image_dir = '127.0.0.1:8080/image/'+user_id + "-" + cr + ".png";
 
       var has_image = req.body.has_image;
       //upload
