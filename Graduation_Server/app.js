@@ -1,17 +1,34 @@
 var express = require('express');
 var app = express();
 var bodyParser = require('body-parser');
-
-
 var contents = require('./routes/contents.js');
 var user = require('./routes/user.js')
+var multer = require('multer');
 
 app.use(bodyParser.urlencoded({ extended: false }))
 
 app.use('/user',user);
 app.use('/contents',contents);
 app.use('/image', express.static('files/images'));
+app.use('/profile',express.static('files/profile'));
 
+
+app.get('/insertProfile',(req,res)=>{
+  var output=`
+  <html>
+  <body>
+     <form method="post" action="user/profile" enctype= multipart/form-data>
+         <input type="text" name="user_id">
+         <h1></h1>
+         <input type="file" name="userprofile">
+         <input type="submit">
+     </form>
+  </body>
+  </html>
+  `
+res.send(output);
+
+})
 
 app.get('/insertUser',(req,res)=>{
   var output=`

@@ -3,6 +3,17 @@ var router = express.Router();
 var mysql = require('mysql');
 var db = require('../config/db.js');
 var conn = mysql.createConnection(db);
+var fs = require('fs');
+var multer = require('multer');
+var storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'files/profile')
+  },
+  filename: function (req, file, cb) {
+    cb(null, req.body.user_id+ '-' + 'profile.png')
+  }
+})
+
 
 router.get('/',(req,res)=>{
   var sql = "SELECT * FROM user_info"
@@ -12,6 +23,22 @@ router.get('/',(req,res)=>{
     }else{
       res.json(rows);
     }
+  })
+})
+
+var upload = multer({storage:storage}).single('userprofile');
+router.post('/profile',(req,res)=>{
+  upload(req,res,(err)=>{
+    var user_id = req.body.user_id;
+    var image_dir = '127.0.0.1:8080/profile/' + user_id + "-"+'profile.png';
+    var sql = "UPDATE user_info SET profile_dir=?"
+    conn.query(sql,[image_dir],(err,rows)=>{
+      if(err){
+        res.status(400).send(err);
+      }else{
+        res.status(200).send('success');
+      }
+    })
   })
 })
 
@@ -33,5 +60,6 @@ router.post('/',(req,res)=>{
   })
 
 })
+
 
 module.exports = router;
