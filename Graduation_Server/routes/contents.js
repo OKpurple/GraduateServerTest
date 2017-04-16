@@ -37,7 +37,7 @@ router.get('/around', (req, res) => {
         if (err) {
             console.log(err);
         } else {
-            res.status(200).json(rows);
+            res.status(200).json(rows[1]);
         }
     });
 });
