@@ -2,12 +2,12 @@ var express = require('express');
 var app = express();
 var bodyParser = require('body-parser');
 var contents = require('./routes/contents.js');
-var user = require('./routes/user.js')
+var users = require('./routes/users.js')
 var multer = require('multer');
 
 app.use(bodyParser.urlencoded({ extended: false }))
 
-app.use('/user',user);
+app.use('/users',users);
 app.use('/contents',contents);
 app.use('/image', express.static('files/images'));
 app.use('/profile',express.static('files/profile'));
@@ -17,10 +17,51 @@ app.get('/insertProfile',(req,res)=>{
   var output=`
   <html>
   <body>
-     <form method="post" action="user/profile" enctype= multipart/form-data>
+     <form method="post" action="users/profile" enctype= multipart/form-data>
          <input type="text" name="user_id">
          <h1></h1>
          <input type="file" name="userprofile">
+         <input type="submit">
+     </form>
+  </body>
+  </html>
+  `
+res.send(output);
+
+})
+
+app.get('/insertPosition',(req,res)=>{
+  var output=`
+  <html>
+  <body>
+     <form method="post" action="users/position">
+          <h1>lat</h1>
+         <input type="text" name="lat">
+         <h1>lng</h1>
+         <input type="text" name="lng">
+         <h1>user_id</h1>
+         <input type="text" name='user_id'>
+         <input type="submit">
+     </form>
+  </body>
+  </html>
+  `
+res.send(output);
+
+})
+
+
+app.get('/around',(req,res)=>{
+  var output=`
+  <html>
+  <body>
+     <form action="contents/around" method="get">
+         <h1>lat</h1>
+         <input type="text" name="lat">
+         <h1>lng</h1>
+         <input type="text" name="lng">
+         <h1>user_id</h1>
+         <input type="text" name='id'>
          <input type="submit">
      </form>
   </body>

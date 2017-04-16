@@ -30,8 +30,9 @@ var upload = multer({storage:storage}).single('userprofile');
 router.post('/profile',(req,res)=>{
   upload(req,res,(err)=>{
     var user_id = req.body.user_id;
-    var image_dir = '127.0.0.1:8080/profile/' + user_id + "-"+'profile.png';
-    var sql = "UPDATE user_info SET profile_dir=?"
+    var image_dir = 'http://13.124.115.238:8080/profile/' + user_id + "-"+'profile.png';
+    var sql = 'UPDATE user_info'
+            + 'SET profile_dir = ?'
     conn.query(sql,[image_dir],(err,rows)=>{
       if(err){
         res.status(400).send(err);
@@ -60,6 +61,28 @@ router.post('/',(req,res)=>{
   })
 
 })
+
+
+
+
+// post 유저의 위치 업데이트
+router.post('/position', function(req, res) {
+    //var user_id = req.params.user_id;
+    var user_id = req.body.user_id
+    var latitude = req.body.lat;
+    var longitude = req.body.lng;
+    var sql = "UPDATE user_posi SET lat = ? , lng = ? WHERE user_id = ? "
+    conn.query(sql, [latitude, longitude, user_id], function(err, rows) {
+            if (err) {
+                console.log(err);
+            } else {
+                res.json(rows);
+            }
+      })
+})
+
+
+
 
 
 module.exports = router;
