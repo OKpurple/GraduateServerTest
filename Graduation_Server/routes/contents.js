@@ -52,7 +52,7 @@ router.post('/:id', function(req, res) {
     var crdate = utils.getTimeDate();
     var crtime = utils.getTimeTime();
     var cr = crdate + crtime;
-
+    
     req.params.create_at = cr;
 
     upload(req, res, (err) => {
@@ -63,19 +63,23 @@ router.post('/:id', function(req, res) {
 
         var has_image = req.body.has_image;
         var image_dir = '0';
+    	var lng = req.body.lng;
+	var lat = req.body.lat;
+
         if (has_image == 1) {
             image_dir = 'http://13.124.115.238:8080/image/' + user_id + "-" + cr + ".png";
         }
+	var sql1 = 'UPDATE user_posi SET lat=?,lng=? WHERE user_id =?;'
 
-        var sql = 'INSERT INTO contents(user_id,content_text,create_at,share_range,location_range,image_dir)' +
+        var sql2 = 'INSERT INTO contents(user_id,content_text,create_at,share_range,location_range,image_dir) ' +
             'VALUES (?, ?, ?, ?, ?, ?)';
-
-
-        conn.query(sql, [user_id, content_text, create_at, share_range, location_range, image_dir], (err, rows) => {
+	var sql = sql1+sql2;
+	
+        conn.query(sql, [lat,lng,user_id,user_id, content_text, create_at, share_range, location_range, image_dir], (err, rows) => {
             if (err) {
                 console.log(err);
             } else {
-                res.status(200).send('success');
+                res.status(200).send(rows);
             }
         });
     });
