@@ -3,8 +3,12 @@ let TOKEN_KEY = 'jwhtoken'
 var authMiddleware = (req,res,next) => {
   var token = req.headers.authorization;
 
-
+  //로그인 시
   if ( req.path === '/login'){
+      return next();
+  }
+  //회원 가입시
+  if ( req.path === '/'){
       return next();
   }
 

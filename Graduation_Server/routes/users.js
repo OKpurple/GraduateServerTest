@@ -1,6 +1,6 @@
 var express = require('express');
 var utils = require('../utils.js');
-var bcrypt =require('bcrypt');
+var bcrypt =require('bcrypt-nodejs');
 var jwt = require('jsonwebtoken');
 var router = express.Router();
 var mysql = require('mysql');
@@ -14,10 +14,10 @@ const TOKEN_KEY = "jwhtoken"
 
 var storage = multer.diskStorage({
     destination: function(req, file, cb) {
-        cb(null, 'files/profile')
+        cb(null, 'files/profiles')
     },
     filename: function(req, file, cb) {
-        cb(null, req.body.user_id + '-' + 'profile.png')
+        cb(null, req.body.user_id + '-' + 'profiles.png')
     }
 })
 
@@ -173,7 +173,7 @@ var upload = multer({
 router.post('/profile', (req, res) => {
     upload(req, res, (err) => {
         var user_id = req.body.user_id;
-        var image_dir = 'http://13.124.115.238:8080/profile/' + user_id + "-" + 'profile.png';
+        var image_dir = 'http://13.124.115.238:8080/profiles/' + user_id + "-" + 'profile.png';
         var sql = 'UPDATE user_info' +
             'SET profile_dir = ?'
         conn.query(sql, [image_dir], (err, rows) => {
