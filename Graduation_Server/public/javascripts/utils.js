@@ -39,16 +39,20 @@ module.exports.SUCCESS =  {
             }
 };
 
-module.exports .INVALID_REQUEST =  {
+module.exports.INVALID_REQUEST =  {
             meta: {
                       code: -10,
                       message: "잘못된 요청입니다."
             }
 };
 
-module.exports.toResp = function(meta,data){
-          meta.data = data;
-          return meta;
+module.exports.toRes = function(meta,data){
+    return Object.assign(
+      {},
+      meta,
+      data
+    )
+
 }
 
 module.exports.getTimeStamp = function(){

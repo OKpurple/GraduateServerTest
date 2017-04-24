@@ -1,0 +1,8 @@
+{
+  "user"     : "we",
+  "password" : "wearetogether",
+  "database" : "GraduateServer",
+  "multipleStatements" : true,
+  "connectionLimit"     : 20,
+  "waitForConnections"   : true
+}
