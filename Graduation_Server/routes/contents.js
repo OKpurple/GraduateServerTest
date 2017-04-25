@@ -16,7 +16,61 @@ var _storage = multer.diskStorage({
 });
 const TOKEN_KEY = "jwhtoken"
 
+//모든 글 보기
+router.get('/',(req,res)=>{
+  utils.dbConnect(res).then((connection)=>{
+    utils.query(connection,res,
+    `SELECT * FROM contents`).then((result)=>{
+      if(result.length === 0){
+        connection.release()
+        res.status(200).json(
+          {
+            meta : {
+              code : 200,
+              message : "글이 없음"
+            }
+          }
+        )
+      }else{
+        connection.release()
+        res.status(200).json(utils.toRes(utils.SUCCESS,{
+          data : result
+        }))
+      }
+    })
+  })
+})
 
+//user_id = id인 값의 모든 글 보기
+router.get('/my', function(req, res) {
+    var user_id = req.authorizationId;
+    utils.dbConnect(res).then((connection)=>{
+      utils.query(connection,res,
+      `SELECT c.*, u.user_name
+       FROM contents c, user_info u
+       WHERE c.user_id = ? && c.user_id = u.user_id
+       ORDER BY c.create_at DESC`,[user_id])
+       .then((result)=>{
+         if(result.length === 0 ){
+           res.status(200).json(
+             {
+               meta : {
+                 code : 200,
+                 message : "제가 쓴 글이 없습니다"
+               }
+             }
+           )
+         }else{
+           res.status(200).json(utils.toRes(utils.SUCCESS,
+             {
+                  myContentsCount : result.length,
+                  myContents: result
+             }
+           ))
+         }
+       })
+    })
+  })
 
 
 
@@ -28,6 +82,7 @@ router.get('/around', (req, res) => {
     //페이지 카운트 해야함???
 
     utils.dbConnect(res).then((connection)=>{
+      //위치 업데이트
       utils.query(connection,res,
       'UPDATE user_posi SET lat = ? , lng = ? WHERE user_id = ?',[latitude,longitude,user_id])
       .then((updateresult)=>{
@@ -53,6 +108,7 @@ router.get('/around', (req, res) => {
                data : aroundResult
              }))
            }
+           connection.release()
          })
       })
     })
@@ -62,7 +118,7 @@ router.get('/around', (req, res) => {
 
 //user_id = id 글 쓰기
 var upload = multer({storage: _storage}).single('content_image');
-router.post('/write', function(req, res) {
+router.post('/', function(req, res) {
         var user_id = req.authorizationId;
         var create_at = utils.getTimeStamp();
         var crdate = utils.getTimeDate();
@@ -118,6 +174,7 @@ router.delete('/:content_id',(req,res)=>{
   })
 })
 
+module.exports = router;
 
 // //글 수정
 // router.put('/:contents_id', (req, res) => {
@@ -211,27 +268,6 @@ router.delete('/:content_id',(req,res)=>{
 //     })
 // })
 
-//user_id = id인 값의 모든 글 보기
-router.get('/id', function(req, res) {
-    var sql = 'SELECT c.*, u.user_name FROM contents c, user_info u WHERE c.user_id = ?' +
-        ' &&  c.user_id = u.user_id ORDER BY c.create_at DESC';
-    conn.query(sql, [req.params.id], (err, rows) => {
-        if (err) {
-            console.log(err);
-        } else {
-            res.json(rows);
-        }
-    })
-})
-
-
-
-
-
-
-
-
-
 // router.get('/never', function(req, res) {
 //
 //     var user_id = req.query.id;
@@ -254,13 +290,3 @@ router.get('/id', function(req, res) {
 //         }
 //     })
 // })
-
-
-
-
-
-
-
-
-
-module.exports = router;

@@ -12,6 +12,10 @@ var authMiddleware = (req,res,next) => {
       return next();
   }
 
+  if ( req.path === '/contents'){
+      return next();
+  }
+
   if(!token){
     return res.status(403).json({
            success: false,

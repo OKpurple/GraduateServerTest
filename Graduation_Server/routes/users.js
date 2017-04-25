@@ -43,14 +43,12 @@ router.post('/',(req,res)=>{
 
       if(login_pw !== reEnterPassword){
         return res.status(400).json(
-
                 {
                     meta: {
                         code: -26,
                         message: "비밀번호와 비밀번호 확인이 일치하지 않습니다."
                     }
                 }
-
         );
     }
 
@@ -78,11 +76,7 @@ router.post('/',(req,res)=>{
               public_range
             ]
           ).then((registResult)=>{
-            res.send(utils.toRes(utils.SUCCESS,
-              {
-              inserted : registResult
-              }
-          ));
+            res.send(utils.toRes(utils.SUCCESS));
             connection.release();
           })
           })
@@ -94,6 +88,9 @@ router.post('/login',(req,res)=>{
   var login_id = req.body.login_id;
   var login_pw = req.body.login_pw;
   console.log(login_id);
+  if(login_id===undefined){
+    return res.status(400).json(utils.toRes(utils.INVALID_REQUEST));
+  }
 
   utils.dbConnect(res).then((connection)=>{
     utils.query(connection,res,
@@ -140,7 +137,7 @@ router.post('/login',(req,res)=>{
 
 
 //내 정보
-router.get('/:user_id',(req,res)=>{
+router.get('/my',(req,res)=>{
 
   let user_id = req.authorizationId;
   console.log(user_id);
@@ -204,21 +201,21 @@ router.post('/position', function(req, res) {
         if(selectRes.length === 0){
           utils.query(connection,res,`INSERT INTO user_posi(lat,lng, user_id) VALUES (?,?,?)`,
           [latitude,longitude,user_id]).then((insertRes)=>{
-            return res.json({
-                message : "insert",
+            return res.json(utils.toRes(utils.SUCCESS,
+              {
                 data : insertRes
-            })
+              }
+            ))
           });
         }else{
           utils.query(connection,res,`UPDATE user_posi SET lat = ? , lng = ? WHERE user_id = ?`,
-            [latitude,longitude,user_id]).then((result)=>{
-                return res.json(utils.toRes(utils.SUCCESS,{
-                message : "update",
-                data : result
-              })
-            );
+            [latitude,longitude,user_id]).then((updateRes)=>{
+                return res.json(utils.toRes(utils.SUCCESS,
+                  {
+                    data : updateRes
+                  }
+                ));
               connection.release();
-
             })
         }
       })
