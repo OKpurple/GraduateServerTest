@@ -26,7 +26,7 @@ var storage = multer.diskStorage({
 
 
 //회원 등록
-router.post('/',(req,res)=>{
+router.post('/regist',(req,res)=>{
       var login_id = req.body.login_id;
       var login_pw = req.body.login_pw;
       let reEnterPassword = req.body.reEnterpw;
@@ -226,9 +226,7 @@ router.post('/position', function(req, res) {
   router.get('/', (req,res) =>{
     utils.dbConnect(res).then((connection)=>{
       utils.query(connection,res,
-        `SELECT * FROM user_info ui
-         LEFT OUTER JOIN user_posi up
-         ON ui.user_id = up.user_id`)
+        `SELECT * FROM user_info`)
          .then((result)=>{
            connection.release();
            res.status(200).json(utils.toRes(utils.SUCCESS,

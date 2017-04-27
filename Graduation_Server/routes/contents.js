@@ -135,6 +135,8 @@ router.post('/', function(req, res) {
           var lng = req.body.lng;
           var lat = req.body.lat;
 
+	console.log(user_id,content_text, share_range, location_range, has_image,image_dir, lng,lat);
+
           if (has_image == 1) {
               image_dir = 'http://13.124.115.238:8080/image/' + user_id + "-" + trimCreateAt + ".png";
           }

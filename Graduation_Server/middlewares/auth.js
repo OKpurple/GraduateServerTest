@@ -8,7 +8,7 @@ var authMiddleware = (req,res,next) => {
       return next();
   }
   //회원 가입시
-  if ( req.path === '/'){
+  if ( req.path === '/regist'){
       return next();
   }
 
