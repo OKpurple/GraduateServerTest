@@ -1,5 +1,6 @@
 var jwt = require('jsonwebtoken');
-let TOKEN_KEY = 'jwhtoken'
+let TOKEN_KEY = 'jwhtoken';
+var utils = require('../utils');
 var authMiddleware = (req,res,next) => {
   var token = req.headers.authorization;
 
@@ -24,28 +25,47 @@ var authMiddleware = (req,res,next) => {
   }
 
   const onError = (error) => {
-        res.status(403).json({
+      return res.status(403).json({
             code : 403,
             success: false,
             message: error.message
         })
     }
 
+    utils.dbConnect(res).then((connection)=>{
 
-  const p = new Promise((resolve, reject)=>{
-    jwt.verify(token, TOKEN_KEY,(err,decoded)=>{
-      if(err){
-        reject(err);
+      utils.query(connection,res,`SELECT * FROM Invalid_token WHERE Invalid_token = ?`,[token])
+      .then((selectResult)=>{
+
+        if(selectResult.length === 0){
+          new Promise((resolve,reject)=>{
+            jwt.verify(token, TOKEN_KEY,(err,decoded)=>{
+              if(err){
+                reject(err);
+              }else{
+                resolve(decoded);
+              }
+          });
+        }).then((decoded)=>{
+          console.log(decoded.user_id);
+          req.authorizationId = decoded.user_id
+          //.headers.authorization = token;
+          next();
+        }).catch(onError);
       }else{
-        resolve(decoded);
+        return res.status(400).json({
+          meta:{
+            message : "파기된 토큰"
+          }
+        })
       }
     })
-  }).then((decoded)=>{
-     req.authorizationId = decoded.user_id
-    next();
-  }).catch(onError);
+  })
+
+};
 
 
-}
+
+
 
 module.exports = authMiddleware;

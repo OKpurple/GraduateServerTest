@@ -17,7 +17,7 @@ var _storage = multer.diskStorage({
 const TOKEN_KEY = "jwhtoken"
 
 //모든 글 보기
-router.get('/',(req,res)=>{
+router.get('/test',(req,res)=>{
   utils.dbConnect(res).then((connection)=>{
     utils.query(connection,res,
     `SELECT * FROM contents`).then((result)=>{
@@ -46,10 +46,12 @@ router.get('/my', function(req, res) {
     var user_id = req.authorizationId;
     utils.dbConnect(res).then((connection)=>{
       utils.query(connection,res,
-      `SELECT c.*, u.user_name
+      `SELECT c.*, u.user_name,u.profile_dir, ifnull(cl.is_like,0)
        FROM contents c, user_info u
+       LEFT OUTER JOIN content_like cl
+       ON cl.user_id = ? && cl.content_id = c.content_id
        WHERE c.user_id = ? && c.user_id = u.user_id
-       ORDER BY c.create_at DESC`,[user_id])
+       ORDER BY c.create_at DESC`,[user_id,user_id])
        .then((result)=>{
          if(result.length === 0 ){
            res.status(200).json(
@@ -81,8 +83,9 @@ router.get('/around', (req, res) => {
     var longitude = req.query.lng;
     //페이지 카운트 해야함???
 
+    //위치 업데이트
     utils.dbConnect(res).then((connection)=>{
-      //위치 업데이트
+
       utils.query(connection,res,
       'UPDATE user_posi SET lat = ? , lng = ? WHERE user_id = ?',[latitude,longitude,user_id])
       .then((updateresult)=>{
@@ -175,8 +178,46 @@ router.delete('/:content_id',(req,res)=>{
     })
   })
 })
+//좋아요 누르기 취소
+router.post('/like',(req,res)=>{
+  var user_id = req.authorizationId;
+  var content_id = req.body.content_id;
+  var is_like = req.body.is_like;
+
+  utils.dbConnect(res).then((conn)=>{
+    if(is_like === 0){
+      utils.query(conn,res,`INSERT INTO content_like(user_id,content_id,is_like) VALUES(?,?,?)`,[user_id,content_id,is_like])
+      .then((insertRes)=>{
+        utils.query(conn,res,`UPDATE contents SET like_cnt = like_cnt + 1 WHERE content_id = ?`,[content_id])
+        .then((updateRes)=>{
+          res.json(utils.toRes(utils.SUCCESS,{
+            is_like : 1,
+            update : updateRes
+          }))
+        })
+      });
+      conn.release();
+    }else{
+      utils.query(conn,res,`DELETE FROM content_like WHERE user_id = ? && content_id = ?`,[user_id,content_id])
+      .then((deleteRes)=>{
+        utils.query(conn,res,`UPDATE contents SET like_cnt = like_cnt - 1 WHERE content_id = ?`,[content_id])
+        .then((updateRes)=>{
+          res.json(utils.toRes(utils.SUCCESS,
+            {
+            is_like : 0,
+            update : updateRes
+            }
+          ))
+        });
+      })
+    }
+  })
+});
+
 
 module.exports = router;
+
+
 
 // //글 수정
 // router.put('/:contents_id', (req, res) => {
@@ -195,100 +236,6 @@ module.exports = router;
 //             console.log(err);
 //         } else {
 //             res.status(200).send('success');
-//         }
-//     })
-// })
-
-
-
-
-
-
-
-//좋아요 버튼
-// router.post('/like', (req, res) => {
-//     var user_id = req.body.user_id;
-//     var contents_id = req.body.content_id;
-//     var is_like = req.is_like;
-//     var sql;
-//
-//     if (is_like == 0) {
-//         sql = 'INSERT INTO content_like(user_id,content_id,is_like) VALUES(?,?,?)';
-//         conn.query(sql, [user_id, content_id, is_like], (err, rows) => {
-//             if (err) {
-//                 console.log(err)
-//             } else {
-//                 res.status(200).send('success');
-//             }
-//         })
-//     } else {
-//         sql = 'DELETE content_like where content_id = ?, user_id = ?';
-//         conn.query(sql, [content_id, user_id], (err, rows) => {
-//             if (err) {
-//                 console.log(err);
-//             } else {
-//                 res.status(200).send('delete');
-//             }
-//         })
-//     }
-// })
-
-
-
-// router.get('/all', (req, res) => {
-//
-//     var user_id = req.query.user_id;
-//     var sql = 'SELECT c.*, u.user_name' +
-//         ' FROM user_info u,contents c' +
-//         ' WHERE u.user_id=c.user_id'
-//
-//     conn.query(sql, (err, rows) => {
-//         if (err) {
-//             console.log(err);
-//         } else {
-//             res.json(rows);
-//         }
-//     })
-// })
-
-// router.get('/', (req, res) => {
-//
-//     var user_id = req.query.user_id;
-//     console.log(user_id);
-//     var sql = 'SELECT c.*, u.user_name, ifnull(cl.is_like,0) as is_like, u.profile_dir' +
-//         ' FROM user_info u,contents c' +
-//         ' LEFT OUTER JOIN content_like cl' +
-//         ' ON cl.content_id = c.content_id && cl.user_id = ?' +
-//         ' WHERE u.user_id=c.user_id'
-//
-//     conn.query(sql, [user_id], (err, rows) => {
-//         if (err) {
-//             console.log(err);
-//         } else {
-//             res.json(rows);
-//         }
-//     })
-// })
-
-// router.get('/never', function(req, res) {
-//
-//     var user_id = req.query.id;
-//     var latitude = req.query.lat;
-//     var longitude = req.query.lng;
-//
-//     console.log('user id = ' + user_id);
-//     console.log('lat = ' + latitude + ', lng = ' + longitude);
-//     var sql = 'SELECT user_id ' +
-//         'FROM user_posi ' +
-//         'WHERE user_id != ? ' +
-//         'AND ( 6371 * acos( cos( radians(?) ) * cos( radians( lat ) ) * cos( radians( lng ) - radians(?) ) + sin( radians(?) ) * sin( radians( lat ) ) ) )< 0.5;'
-//     //  +      'ORDER BY distance';
-//
-//     conn.query(sql, [user_id, latitude, longitude, latitude], (err, rows) => {
-//         if (err) {
-//             console.log(err);
-//         } else {
-//             res.json(rows);
 //         }
 //     })
 // })

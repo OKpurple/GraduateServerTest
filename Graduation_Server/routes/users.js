@@ -17,7 +17,7 @@ var storage = multer.diskStorage({
         cb(null, 'files/profiles')
     },
     filename: function(req, file, cb) {
-        cb(null, req.body.user_id + '-' + 'profiles.png')
+        cb(null, req.authorizationId +'-'+req.params.create_at+ '-' + 'profile.png')
     }
 })
 
@@ -133,8 +133,23 @@ router.post('/login',(req,res)=>{
     })
   })
 })
+//로그아웃
+router.delete('/:user_id',(req,res)=>{
+  let token = req.headers.authorization;
+  let decoded = jwt.verify(token, TOKEN_KEY);
+  try{
+  utils.dbConnect(res).then((conn)=>{
+    utils.query(conn,res,`INSERT INTO Invalid_token(Invalid_token,expired_to) VALUES(?,FROM_UNIXTIME(?))`,[token,decoded.exp])
+    .then((insertRes)=>{
+      conn.release()
+      res.json(utils.toRes(utils.SUCCESS));
+    })
+  })
+  }catch(err){
+    res.json(utils.toRes(utils.SUCCESS));
+  }
 
-
+})
 
 //내 정보
 router.get('/my',(req,res)=>{
@@ -168,17 +183,20 @@ var upload = multer({
     storage: storage
 }).single('userprofile');
 router.post('/profile', (req, res) => {
+    let user_id = authorizationId;
+    var crdate = utils.getTimeDate();
+    var crtime = utils.getTimeTime();
+    var trimCreateAt = crdate + crtime;
+    req.params.create_at = trimCreateAt;
+
     upload(req, res, (err) => {
         var user_id = req.body.user_id;
-        var image_dir = 'http://13.124.115.238:8080/profiles/' + user_id + "-" + 'profile.png';
-        var sql = 'UPDATE user_info' +
-            'SET profile_dir = ?'
-        conn.query(sql, [image_dir], (err, rows) => {
-            if (err) {
-                res.json(utils.toRes(utils.INVALID_REQUEST));
-            } else {
-                res.json(utils.toRes(utils.SUCCESS))
-            }
+        var profile_dir = 'http://13.124.115.238:8080/profiles/' + user_id + "-"+trimCreateAt+ "-" + 'profile.png';
+
+        utils.dbConnect(res).then((conn)=>{
+          utils.query(conn,res,`UPDATE user_info SET profile_dir = ? WHERE user_id =?`,[profile_dir,user_id]).then((result)=>{
+            res.json(utils.toRes(utils.SUCCESS));
+          })
         })
     })
 })
