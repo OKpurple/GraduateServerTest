@@ -1,6 +1,6 @@
 var express = require('express');
 var utils = require('../utils.js');
-var bcrypt =require('bcrypt-nodejs');
+var bcrypt =require('bcrypt-nodejs'); //암호화
 var jwt = require('jsonwebtoken');
 var router = express.Router();
 var mysql = require('mysql');
@@ -8,7 +8,6 @@ var db = require('../config/db.js');
 var conn = mysql.createConnection(db);
 var fs = require('fs');
 var multer = require('multer');
-var authMiddleware = require('../middlewares/auth.js');
 const TOKEN_KEY = "jwhtoken"
 
 
@@ -82,6 +81,9 @@ router.post('/regist',(req,res)=>{
           })
       })
 })
+
+
+
 
 //로그인
 router.post('/login',(req,res)=>{

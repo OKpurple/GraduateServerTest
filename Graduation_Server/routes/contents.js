@@ -1,11 +1,9 @@
 /*jshint esversion: 6 */
 var express = require('express');
 var fs = require('fs')
-
 var mysql = require('mysql');
 var db = require('../config/db.js');
 var conn = mysql.createConnection(db);
-
 var multer = require('multer');
 var router = express.Router();
 var utils = require('../utils.js')
@@ -213,6 +211,86 @@ router.post('/like',(req,res)=>{
     }
   })
 });
+
+//리플 등록
+router.post('/:contentId/reply',(req,res)=>{
+  let user_id = req.authorizationId;
+  let content_id = req.params.contentId;
+  let reply = req.body.reply;
+
+  if ( reply === undefined || reply.trim() === "" ) {
+        return res.status(400).json(utils.INVALID_REQUEST);
+    }
+
+    if ( 140 < stringLength(reply.trim()) || stringLength(reply.trim()) < 1 ) {
+        return res.status(400).json(utils.INVALID_REQUEST);
+    }
+
+  utils.dbConnect(res).then((conn)=>{
+    utils.query(conn,res,`INSERT INTO content_reply(content_id,user_id,reply) VALUES(?,?,?)`,[content_id,user_id,reply])
+    .then((insertRes)=>{
+      res.status(200).json(utils.SUCCESS);
+    })
+  })
+
+})
+//댓글 보기
+router.get('/:contentId/reply',(req,res)=>{
+  let content_id = req.params.contentId;
+  //let user_id =  authorizationId;
+
+  utils.dbConnect(res).then((conn)=>{
+    utils.query(conn,res,`SELECT cr.*, u.user_name, u.profile_dir
+      FROM content_reply cr
+      LEFT OUTER JOIN user_info u
+      ON u.user_id = cr.user_id
+      WHERE cr.content_id = ?
+      ORDER BY create_at DESC`,[content_id])
+    .then((result)=>{
+      res.json(utils.toRes(util.SUCCESS,
+      {
+        data : result
+      }
+      ))
+      conn.release();
+    })
+  })
+})
+
+//리플 삭제
+router.delete('/:contentId/reply',(req,res)=>{
+  let content_id = req.params.contentId;
+  let user_id =  req.authorizationId;
+
+  utils.dbConnect(res).then((conn)=>{
+    utils.query(conn,res,`DELETE FROM content_reply WHERE user_id = ? AND content_id = ?`,[user_id, content_id])
+    .then((result)=>{
+      res.json(utils.SUCCESS);
+    })
+  })
+})
+
+//댓글 수정
+router.put('/:contentId/reply',(req,res)=>{
+  let content_id = req.params.contentId;
+  let user_id =  req.authorizationId;
+  let reply = req.body.reply;
+
+  if ( reply === undefined || reply.trim() === "" ) {
+        return res.status(400).json(utils.INVALID_REQUEST);
+    }
+
+    if ( 140 < stringLength(reply.trim()) || stringLength(reply.trim()) < 1 ) {
+        return res.status(400).json(utils.INVALID_REQUEST);
+    }
+
+  utils.dbConnect(res).then((conn)=>{
+    utils.query(conn,res,`UPDATE content_reply SET reply = ? WHERE content_id = ?, user_id = ?`,[reply,content_id,user_id])
+    .then((result)=>{
+      res.json(utils.SUCCESS);
+    })
+  })
+})
 
 
 module.exports = router;

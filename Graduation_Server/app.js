@@ -2,7 +2,6 @@ var express = require('express');
 var app = express();
 var bodyParser = require('body-parser');
 var token = require('./routes/token')
-
 var multer = require('multer');
 var authMiddleware = require('./middlewares/auth.js');
 
@@ -23,6 +22,9 @@ app.use('/contents',authMiddleware);
 var contents = require('./routes/contents.js');
 app.use('/contents',contents);
 
+app.use('/relation',authMiddleware);
+var relation = require('./routes/relation');
+app.use('/relation',relation);
 
 app.use('/image', express.static('files/images'));
 app.use('/profile',express.static('files/profile'));
