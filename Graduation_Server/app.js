@@ -27,7 +27,7 @@ var relation = require('./routes/relation');
 app.use('/relation',relation);
 
 app.use('/image', express.static('files/images'));
-app.use('/profile',express.static('files/profile'));
+app.use('/profiles',express.static('files/profiles'));
 
 
 

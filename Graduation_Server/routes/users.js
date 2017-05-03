@@ -185,15 +185,16 @@ var upload = multer({
     storage: storage
 }).single('userprofile');
 router.post('/profile', (req, res) => {
-    let user_id = authorizationId;
+    let user_id = req.authorizationId;
     var crdate = utils.getTimeDate();
     var crtime = utils.getTimeTime();
     var trimCreateAt = crdate + crtime;
     req.params.create_at = trimCreateAt;
 
     upload(req, res, (err) => {
-        var user_id = req.body.user_id;
+       
         var profile_dir = 'http://13.124.115.238:8080/profiles/' + user_id + "-"+trimCreateAt+ "-" + 'profile.png';
+	console.log(profile_dir + "ㅋㅋㅋㅋㅋㅋㅋ");
 
         utils.dbConnect(res).then((conn)=>{
           utils.query(conn,res,`UPDATE user_info SET profile_dir = ? WHERE user_id =?`,[profile_dir,user_id]).then((result)=>{
@@ -214,7 +215,7 @@ router.post('/position', function(req, res) {
     var user_id = req.authorizationId
     var latitude = req.body.lat;
     var longitude = req.body.lng;
-
+    console.log(latitude + ','+longitude);
     utils.dbConnect(res).then((connection)=>{
       utils.query(connection,res,`SELECT * from user_posi WHERE user_id = ?`,[user_id])
       .then((selectRes)=>{
@@ -260,7 +261,23 @@ router.post('/position', function(req, res) {
   });
 
 
+ router.get('/id',(req,res)=>{
 
+  user_id = req.authorizationId;
+  utils.dbConnect(res).then((connection)=>{
+   utils.query(connection , res,
+	`SELECT * FROM user_info WHERE user_id = ?`,[user_id]).then((result)=>{
+	if(result.length===0){
+	res.json(utils.INVALID_REQUEST);
+	}else{
+	res.json(utils.toRes(utils.SUCCESS,{
+		data : result
+	}))
+	}
+	connection.release();
+})	
+})
+})
 
 
 
