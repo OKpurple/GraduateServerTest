@@ -10,7 +10,7 @@ const TOKEN_KEY = "jwhtoken"
 
 app.use(bodyParser.urlencoded({ extended: false }))
 
-app.use('/users',authMiddleware);
+app.use('/token',authMiddleware);
 var token = require('./routes/token')
 app.use('/token',token);
 

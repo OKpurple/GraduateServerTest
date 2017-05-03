@@ -44,8 +44,8 @@ router.get('/my', function(req, res) {
     var user_id = req.authorizationId;
     utils.dbConnect(res).then((connection)=>{
       utils.query(connection,res,
-      `SELECT c.*, u.user_name,u.profile_dir, ifnull(cl.is_like,0)
-       FROM contents c, user_info u
+      `SELECT c.content_id,c.*, u.user_name,u.profile_dir, ifnull(cl.is_like,0) AS is_like
+       FROM (contents c, user_info u)
        LEFT OUTER JOIN content_like cl
        ON cl.user_id = ? && cl.content_id = c.content_id
        WHERE c.user_id = ? && c.user_id = u.user_id
@@ -60,6 +60,7 @@ router.get('/my', function(req, res) {
                }
              }
            )
+		connection.release();
          }else{
            res.status(200).json(utils.toRes(utils.SUCCESS,
              {
@@ -67,6 +68,7 @@ router.get('/my', function(req, res) {
                   myContents: result
              }
            ))
+		connection.release();
          }
        })
     })
@@ -88,7 +90,7 @@ router.get('/around', (req, res) => {
       'UPDATE user_posi SET lat = ? , lng = ? WHERE user_id = ?',[latitude,longitude,user_id])
       .then((updateresult)=>{
         utils.query(connection,res,
-        `SELECT c.*, u.user_name, u.profile_dir, ifnull(cl.is_like,0), is_like
+        `SELECT c.*, u.user_name, u.profile_dir, ifnull(cl.is_like,0) AS is_like
          FROM (SELECT user_id FROM user_posi WHERE user_id != ? AND ( 6371 * acos( cos( radians(?) ) * cos( radians( lat ) ) * cos( radians( lng ) - radians(?) ) + sin( radians(?) ) * sin( radians( lat ) ) ) )< 1) up,
               user_info u, contents c
          LEFT OUTER JOIN content_like cl
@@ -98,7 +100,8 @@ router.get('/around', (req, res) => {
          [user_id, latitude, longitude, latitude, user_id, user_id])
          .then(aroundResult=>{
            if(aroundResult.length === 0){
-             res.status(201).json({
+              connection.release();
+	      res.status(201).json({
                meta : {
                  code : 201,
                  message : "주변에 글 올린 사람이 없음"
@@ -108,6 +111,7 @@ router.get('/around', (req, res) => {
              res.status(200).json(utils.toRes(utils.SUCCESS,{
                data : aroundResult
              }))
+	    connection.release();
            }
            connection.release()
          })
