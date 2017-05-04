@@ -2,9 +2,6 @@ var express = require('express');
 var utils = require('../utils.js');
 var jwt = require('jsonwebtoken');
 var router = express.Router();
-var mysql = require('mysql');
-var db = require('../config/db.js');
-var conn = mysql.createConnection(db);
 
 const TOKEN_KEY = "jwhtoken"
 
@@ -18,6 +15,7 @@ router.get('/send',(req,res)=>{
        ON ur.req_user_id = u.user_id
        WHERE ur.req_user_id = ? AND ur.relation_status = 0`,[req_user_id])
     .then((result)=>{
+      conn.release();
       if(result.length === 0){
         res.json({
           meta : {
@@ -26,6 +24,7 @@ router.get('/send',(req,res)=>{
           }
         })
       }else{
+        conn.release();
       res.json({
         meta:{
           code : 201,
@@ -78,6 +77,7 @@ router.post('/receive',(req,res)=>{
   utils.dbConnect(res).then((conn)=>{
     utils.query(conn,res,'UPDATE user_relations SET relation_status = 1 WHERE req_user_id = ?, res_user_id =?',[req_user_id,res_user_id])
     .then((result)=>{
+      conn.release();
       res.json(utils.SUCCESS);
     })
   })
@@ -93,6 +93,7 @@ router.get('/receive',(req,res)=>{
        ON ur.req_user_id = u.user_id
        WHERE ur.res_user_id = ? AND ur.relation_status = 0`,[res_user_id])
     .then((result)=>{
+      conn.release();
       if(result.length === 0){
         res.json({
           meta : {
@@ -101,6 +102,7 @@ router.get('/receive',(req,res)=>{
           }
         })
       }else{
+        conn.release();
       res.json({
         meta:{
           code : 201,
@@ -124,6 +126,7 @@ router.get('/friends',(req,res)=>{
        FROM user_relations ur
        WHERE relation_status = 1 AND ur.res_user_id = ? OR ur.req_user_id = ?) my
      WHERE my.friend = u.user_id`,[user_id,user_id,user_id]).then((result)=>{
+       conn.release();
        res.json(utils.toRes(utils.SUCCESS,{
          data:result
        }))
@@ -138,6 +141,7 @@ router.delete('/',(req,res)=>{
   utils.dbConnect(res).then((conn)=>{
     utils.query(conn,res,`DELETE FROM user_relations WHERE (req_user_id = ? AND res_user_id = ?) OR (req_user_id = ? AND res_user_id=?)`,[user_id, opponent_id,opponent_id,user_id])
     .then((result)=>{
+      conn.release();
       db.json(utils.toRes(utils.SUCCESS,{
         delete : result
       }))
@@ -152,6 +156,7 @@ router.put('/friend',(req,res)=>{
   utils.dbConnect(res).then((conn)=>{
     utils.query(conn,res,'UPDATE user_relations SET relation_status = 2 WHERE (req_user_id = ? AND res_user_id =?) OR (req_user_id = ? AND res_user_id=?)',[user_id,opponent_id,opponent_id,user_id])
     .then((result)=>{
+      conn.release();
       res.json(utils.SUCCESS);
     })
   })

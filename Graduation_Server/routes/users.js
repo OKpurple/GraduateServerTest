@@ -3,9 +3,6 @@ var utils = require('../utils.js');
 var bcrypt =require('bcrypt-nodejs'); //암호화
 var jwt = require('jsonwebtoken');
 var router = express.Router();
-var mysql = require('mysql');
-var db = require('../config/db.js');
-var conn = mysql.createConnection(db);
 var fs = require('fs');
 var multer = require('multer');
 const TOKEN_KEY = "jwhtoken"
@@ -65,7 +62,7 @@ router.post('/regist',(req,res)=>{
                   }
                 }
               ))
-            }
+            }else{
             utils.query(connection,res,
             'INSERT INTO user_info(login_id, login_pw, user_name,public_range) VALUES (?,?,?,?)',
             [
@@ -77,7 +74,7 @@ router.post('/regist',(req,res)=>{
           ).then((registResult)=>{
             res.send(utils.toRes(utils.SUCCESS));
             connection.release();
-          })
+          })}
           })
       })
 })
@@ -98,6 +95,7 @@ router.post('/login',(req,res)=>{
     utils.query(connection,res,
     'SELECT login_id,login_pw,user_id from user_info WHERE login_id = ?',[login_id]).then((result)=>{
       if(result.length === 0){
+        connection.release();
           return res.status(400).json(
             {
               meta : {
@@ -115,13 +113,16 @@ router.post('/login',(req,res)=>{
                         algorithm : 'HS256', //"HS256", "HS384", "HS512", "RS256", "RS384", "RS512" default SHA256
                         expiresIn : '720H'// 5 days
                     });
+          connection.release();
           return res.status(200).json(utils.toRes(utils.SUCCESS,
           {
               token : token
           }
         ));
+
         }else{
         //비밀번호 불일치
+        connection.release();
           return res.status(400).json(
             {
               meta:{
@@ -130,6 +131,7 @@ router.post('/login',(req,res)=>{
               }
             }
           )
+
         }
       }
     })
@@ -163,12 +165,14 @@ router.get('/my',(req,res)=>{
     utils.query(connection,res,
     'SELECT * from user_info WHERE user_id = ?',[user_id]).then((result)=>{
       if(result.length === 0 ){
+        connection.release();
         res.status(400).json(utils.toRes(utils.INVALID_REQUEST,
           {
             message : "없는 ID"
           }
       ))}
       else{
+        connection.release();
         res.status(200).json(utils.toRes(utils.SUCCESS,
           {
             data : result
@@ -192,12 +196,13 @@ router.post('/profile', (req, res) => {
     req.params.create_at = trimCreateAt;
 
     upload(req, res, (err) => {
-       
+
         var profile_dir = 'http://13.124.115.238:8080/profiles/' + user_id + "-"+trimCreateAt+ "-" + 'profile.png';
-	console.log(profile_dir + "ㅋㅋㅋㅋㅋㅋㅋ");
+
 
         utils.dbConnect(res).then((conn)=>{
           utils.query(conn,res,`UPDATE user_info SET profile_dir = ? WHERE user_id =?`,[profile_dir,user_id]).then((result)=>{
+            connection.release();
             res.json(utils.toRes(utils.SUCCESS));
           })
         })
@@ -222,6 +227,7 @@ router.post('/position', function(req, res) {
         if(selectRes.length === 0){
           utils.query(connection,res,`INSERT INTO user_posi(lat,lng, user_id) VALUES (?,?,?)`,
           [latitude,longitude,user_id]).then((insertRes)=>{
+            connection.release();
             return res.json(utils.toRes(utils.SUCCESS,
               {
                 data : insertRes
@@ -231,12 +237,13 @@ router.post('/position', function(req, res) {
         }else{
           utils.query(connection,res,`UPDATE user_posi SET lat = ? , lng = ? WHERE user_id = ?`,
             [latitude,longitude,user_id]).then((updateRes)=>{
+              connection.release();
                 return res.json(utils.toRes(utils.SUCCESS,
                   {
                     data : updateRes
                   }
                 ));
-              connection.release();
+
             })
         }
       })
@@ -268,14 +275,15 @@ router.post('/position', function(req, res) {
    utils.query(connection , res,
 	`SELECT * FROM user_info WHERE user_id = ?`,[user_id]).then((result)=>{
 	if(result.length===0){
+    connection.release();
 	res.json(utils.INVALID_REQUEST);
 	}else{
+    connection.release();
 	res.json(utils.toRes(utils.SUCCESS,{
 		data : result
 	}))
 	}
-	connection.release();
-})	
+})
 })
 })
 

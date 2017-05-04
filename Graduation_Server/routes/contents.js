@@ -1,9 +1,6 @@
 /*jshint esversion: 6 */
 var express = require('express');
 var fs = require('fs')
-var mysql = require('mysql');
-var db = require('../config/db.js');
-var conn = mysql.createConnection(db);
 var multer = require('multer');
 var router = express.Router();
 var utils = require('../utils.js')
@@ -52,6 +49,7 @@ router.get('/my', function(req, res) {
        ORDER BY c.create_at DESC`,[user_id,user_id])
        .then((result)=>{
          if(result.length === 0 ){
+           connection.release()
            res.status(200).json(
              {
                meta : {
@@ -60,15 +58,16 @@ router.get('/my', function(req, res) {
                }
              }
            )
-		connection.release();
+
          }else{
+           connection.release()
            res.status(200).json(utils.toRes(utils.SUCCESS,
              {
                   myContentsCount : result.length,
                   myContents: result
              }
            ))
-		connection.release();
+
          }
        })
     })
@@ -108,12 +107,13 @@ router.get('/around', (req, res) => {
                }
              })
            }else{
+             connection.release()
              res.status(200).json(utils.toRes(utils.SUCCESS,{
                data : aroundResult
              }))
-	    connection.release();
+
            }
-           connection.release()
+
          })
       })
     })
@@ -153,6 +153,7 @@ router.post('/', function(req, res) {
           utils.query(connection,res,
           `INSERT INTO contents(user_id,content_text,create_at,share_range,location_range,image_dir) VALUES (?, ?, ?, ?, ?, ?)`,
           [user_id, content_text, create_at, share_range, location_range, image_dir]).then((insertRes)=>{
+            connection.release()
             return res.status(200).json(utils.toRes(utils.SUCCESS,
               {
               update : updateRes,
@@ -173,10 +174,11 @@ router.delete('/:content_id',(req,res)=>{
     utils.query(connection,res,`DELETE FROM contents WHERE content_id = ? AND user_id = ?`,
     [content_id, user_id])
     .then((result)=>{
+      connection.release();
       res.status(200).json(utils.toRes(utils.SUCCESS,{
         data : result
       }));
-      connection.release();
+
     })
   })
 })
@@ -192,18 +194,20 @@ router.post('/like',(req,res)=>{
       .then((insertRes)=>{
         utils.query(conn,res,`UPDATE contents SET like_cnt = like_cnt + 1 WHERE content_id = ?`,[content_id])
         .then((updateRes)=>{
+          conn.release();
           res.json(utils.toRes(utils.SUCCESS,{
             is_like : 1,
             update : updateRes
           }))
         })
       });
-      conn.release();
+
     }else{
       utils.query(conn,res,`DELETE FROM content_like WHERE user_id = ? && content_id = ?`,[user_id,content_id])
       .then((deleteRes)=>{
         utils.query(conn,res,`UPDATE contents SET like_cnt = like_cnt - 1 WHERE content_id = ?`,[content_id])
         .then((updateRes)=>{
+          conn.release();
           res.json(utils.toRes(utils.SUCCESS,
             {
             is_like : 0,
@@ -233,6 +237,7 @@ router.post('/:contentId/reply',(req,res)=>{
   utils.dbConnect(res).then((conn)=>{
     utils.query(conn,res,`INSERT INTO content_reply(content_id,user_id,reply) VALUES(?,?,?)`,[content_id,user_id,reply])
     .then((insertRes)=>{
+      conn.release();
       res.status(200).json(utils.SUCCESS);
     })
   })
@@ -251,12 +256,13 @@ router.get('/:contentId/reply',(req,res)=>{
       WHERE cr.content_id = ?
       ORDER BY create_at DESC`,[content_id])
     .then((result)=>{
+      conn.release();
       res.json(utils.toRes(util.SUCCESS,
       {
         data : result
       }
       ))
-      conn.release();
+
     })
   })
 })
@@ -269,6 +275,7 @@ router.delete('/:contentId/reply',(req,res)=>{
   utils.dbConnect(res).then((conn)=>{
     utils.query(conn,res,`DELETE FROM content_reply WHERE user_id = ? AND content_id = ?`,[user_id, content_id])
     .then((result)=>{
+      conn.release();
       res.json(utils.SUCCESS);
     })
   })
@@ -291,6 +298,7 @@ router.put('/:contentId/reply',(req,res)=>{
   utils.dbConnect(res).then((conn)=>{
     utils.query(conn,res,`UPDATE content_reply SET reply = ? WHERE content_id = ?, user_id = ?`,[reply,content_id,user_id])
     .then((result)=>{
+      conn.release();
       res.json(utils.SUCCESS);
     })
   })
