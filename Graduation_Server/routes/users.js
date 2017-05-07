@@ -268,24 +268,24 @@ router.post('/position', function(req, res) {
   });
 
 
- router.get('/id',(req,res)=>{
-
-  user_id = req.authorizationId;
-  utils.dbConnect(res).then((connection)=>{
-   utils.query(connection , res,
-	`SELECT * FROM user_info WHERE user_id = ?`,[user_id]).then((result)=>{
-	if(result.length===0){
-    connection.release();
-	res.json(utils.INVALID_REQUEST);
-	}else{
-    connection.release();
-	res.json(utils.toRes(utils.SUCCESS,{
-		data : result
-	}))
-	}
-})
-})
-})
+//  router.get('/id',(req,res)=>{
+//
+//   user_id = req.authorizationId;
+//   utils.dbConnect(res).then((connection)=>{
+//    utils.query(connection , res,
+// 	`SELECT * FROM user_info WHERE user_id = ?`,[user_id]).then((result)=>{
+// 	if(result.length===0){
+//     connection.release();
+// 	res.json(utils.INVALID_REQUEST);
+// 	}else{
+//     connection.release();
+// 	res.json(utils.toRes(utils.SUCCESS,{
+// 		data : result
+// 	}))
+// 	}
+// })
+// })
+// })
 
 
 

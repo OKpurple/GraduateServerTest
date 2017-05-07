@@ -118,7 +118,7 @@ router.get('/receive',(req,res)=>{
 
 router.get('/friends',(req,res)=>{
   var user_id = req.authorizationId;
-
+//user_status 가 1이면 친구
   utils.dbConnect(res).then((conn)=>{
     utils.query(conn,res,
     `SELECT u.user_id,u.user_name, u.profile_dir, u.public_range from user_info u,
