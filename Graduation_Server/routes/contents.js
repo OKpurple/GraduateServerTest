@@ -38,22 +38,23 @@ router.get('/test', (req, res) => {
     })
 })
 
-router.get('/friend',(req,res)=>{
-  var user_id = req.authorizationId
-  var latitude = req.query.lat;
-  var longitude = req.query.lng;
+//친구글보기
+router.get('/friend', (req, res) => {
+    var user_id = req.authorizationId
+    var latitude = req.query.lat;
+    var longitude = req.query.lng;
 
 
-  //위치 업데이트
-  utils.dbConnect(res).then((connection) => {
-      //페이징을 위한 검색시간
-      //트리거 사용 페이징타임 인서트
-      utils.query(connection, res, `UPDATE pagenation SET search_time = ? WHERE user_id = ?`, [search_time, user_id]).then((resp) => {
-          utils.query(connection, res,
-                  'UPDATE user_posi SET lat = ? , lng = ? WHERE user_id = ?', [latitude, longitude, user_id])
-              .then((updateresult) => {
-                  utils.query(connection, res,
-                          `SELECT c.*, u.user_name, u.profile_dir, ifnull(cl.is_like,0) AS is_like,
+    //위치 업데이트
+    utils.dbConnect(res).then((connection) => {
+        //페이징을 위한 검색시간
+        //트리거 사용 페이징타임 인서트
+        utils.query(connection, res, `UPDATE pagenation SET search_time = ? WHERE user_id = ?`, [search_time, user_id]).then((resp) => {
+            utils.query(connection, res,
+                    'UPDATE user_posi SET lat = ? , lng = ? WHERE user_id = ?', [latitude, longitude, user_id])
+                .then((updateresult) => {
+                    utils.query(connection, res,
+                            `SELECT c.*, u.user_name, u.profile_dir, ifnull(cl.is_like,0) AS is_like,
                           (SELECT IF(ur.res_user_id = ?, ur.req_user_id, ur.res_user_id) as friend
                            FROM user_relations ur
                            WHERE relation_status = 1 AND ur.res_user_id = ? OR ur.req_user_id = ?) my
@@ -62,76 +63,76 @@ router.get('/friend',(req,res)=>{
                           ON cl.user_id = ? && cl.content_id = c.content_id
                           WHERE c.user_id = my.friend AND c.user_id = u.user_id AND c.user_id != ? AND c.create_at < pn.search_time
                           ORDER BY c.create_at DESC, c.content_id DESC LIMIT 0, 29`, [user_id, user_id, user_id, user_id])
-                      .then(aroundResult => {
-                          if (aroundResult.length === 0) {
-                              connection.release();
-                              res.status(201).json({
-                                  meta: {
-                                      code: 201,
-                                      message: "친구중에 글 올린 사람이 없음"
-                                  }
-                              })
-                          } else {
-                              connection.release()
-                              res.status(200).json(utils.toRes(utils.SUCCESS, {
-                                  nextpage:"http://13.124.115.238:8080/contents/friend/page/30",
-                                  data: aroundResult
-                              }))
+                        .then(aroundResult => {
+                            if (aroundResult.length === 0) {
+                                connection.release();
+                                res.status(201).json({
+                                    meta: {
+                                        code: 201,
+                                        message: "친구중에 글 올린 사람이 없음"
+                                    }
+                                })
+                            } else {
+                                connection.release()
+                                res.status(200).json(utils.toRes(utils.SUCCESS, {
+                                    nextpage: "http://13.124.115.238:8080/contents/friend/page/30",
+                                    data: aroundResult
+                                }))
 
-                          }
+                            }
 
-                      })
-              })
-      })
-  })
+                        })
+                })
+        })
+    })
 
 })
 
 
 //페이지 네이션
-router.get('/around/page/:pagecnt',(req,res)=>{
+router.get('/around/page/:pagecnt', (req, res) => {
 
-  var user_id = req.authorizationId
-  var startPage = parseInt(req.params.pagecnt);
-  var endPage = startPage+29;
-  var latitude = req.query.lat;
-  var longitude = req.query.lng;
-  var nextpageRUL = "http://13.124.115.238:8080/contents/around/page/"+(endPage+1);
-  console.log(nextpageRUL);
+    var user_id = req.authorizationId
+    var startPage = parseInt(req.params.pagecnt);
+    var endPage = startPage + 29;
+    var latitude = req.query.lat;
+    var longitude = req.query.lng;
+    var nextpageRUL = "http://13.124.115.238:8080/contents/around/page/" + (endPage + 1);
+    console.log(nextpageRUL);
 
-  utils.dbConnect(res).then((connection) => {
-    utils.query(connection, res,
-            'UPDATE user_posi SET lat = ? , lng = ? WHERE user_id = ?', [latitude, longitude, user_id])
-        .then((updateresult) => {
-            utils.query(connection, res,
-                    `SELECT c.*, u.user_name, u.profile_dir, ifnull(cl.is_like,0) AS is_like
+    utils.dbConnect(res).then((connection) => {
+        utils.query(connection, res,
+                'UPDATE user_posi SET lat = ? , lng = ? WHERE user_id = ?', [latitude, longitude, user_id])
+            .then((updateresult) => {
+                utils.query(connection, res,
+                        `SELECT c.*, u.user_name, u.profile_dir, ifnull(cl.is_like,0) AS is_like
                     FROM (SELECT user_id FROM user_posi WHERE user_id != ? AND ( 6371 * acos( cos( radians(?) ) * cos( radians( lat ) ) * cos( radians( lng ) - radians(?) ) + sin( radians(?) ) * sin( radians( lat ) ) ) )< 1) up,
                     user_info u, pagenation pn,contents c
                     LEFT OUTER JOIN content_like cl
                     ON cl.user_id = ? && cl.content_id = c.content_id
                     WHERE c.user_id = up.user_id AND c.user_id = u.user_id AND c.user_id != ? AND c.create_at < pn.search_time
-                    ORDER BY c.create_at DESC, c.content_id DESC LIMIT ?, ?`, [user_id, latitude, longitude, latitude, user_id, user_id,startPage,endPage])
-                .then(aroundResult => {
-                    if (aroundResult.length === 0) {
-                        connection.release();
-                        res.status(201).json({
-                            meta: {
-                                code: 201,
-                                message: "더이상 글이 없습니다."
-                            }
-                        })
-                    } else {
-                        connection.release()
-                        res.status(200).json(utils.toRes(utils.SUCCESS, {
-                            nextpage:nextpageRUL,
-                            data: aroundResult
-                        }))
+                    ORDER BY c.create_at DESC, c.content_id DESC LIMIT ?, ?`, [user_id, latitude, longitude, latitude, user_id, user_id, startPage, endPage])
+                    .then(aroundResult => {
+                        if (aroundResult.length === 0) {
+                            connection.release();
+                            res.status(201).json({
+                                meta: {
+                                    code: 201,
+                                    message: "더이상 글이 없습니다."
+                                }
+                            })
+                        } else {
+                            connection.release()
+                            res.status(200).json(utils.toRes(utils.SUCCESS, {
+                                nextpage: nextpageRUL,
+                                data: aroundResult
+                            }))
 
-                    }
+                        }
 
-                })
-        })
-  })
+                    })
+            })
+    })
 
 
 });
@@ -142,36 +143,66 @@ router.get('/around/page/:pagecnt',(req,res)=>{
 
 //user_id = id인 값의 모든 글 보기
 router.get('/:userId/info', function(req, res) {
-    //  var user_id = req.authorizationId;
+    var my_id = req.authorizationId;
     var user_id = req.params.userId;
-    console.log(user_id);
+    console.log(user_id + "의 글보기");
+
+
+    var isSend;
     utils.dbConnect(res).then((connection) => {
-        utils.query(connection, res,
-                `SELECT c.content_id,c.*, u.user_name,u.profile_dir, ifnull(cl.is_like,0) AS is_like
-       FROM (contents c, user_info u)
-       LEFT OUTER JOIN content_like cl
-       ON cl.user_id = ? && cl.content_id = c.content_id
-       WHERE c.user_id = ? && c.user_id = u.user_id
-       ORDER BY c.create_at DESC`, [user_id, user_id])
-            .then((result) => {
-                if (result.length === 0) {
-                    connection.release()
-                    res.status(200).json({
-                        meta: {
-                            code: 200,
-                            message: "제가 쓴 글이 없습니다"
+        utils.query(connection, res, `
+          SELECT *
+          FROM user_relations ur
+          WHERE ur.req_user_id = ? AND ur.res_user_id = ? AND ur.relation_status != 1`, [my_id, user_id]).then((relationRes) => {
+            if (relationRes.length === 0) {
+                isSend = 0; //친구아님
+            } else {
+                isSend = 1; //친구요청
+            }
+
+            utils.query(connection, res, `
+              SELECT * FROEM user_relations WHERE res_user_id = ? AND req_user_id = ?
+              UNION
+              SELECT * FROM user_relations WHERE req_user_id = ? ANd res_user_id = ?
+              `, [my_id,user_id,my_id,user_id]).then((resss) => {
+
+
+              if(resss.length === 0){
+                isSend = 0;
+              }else{
+                isSend = 2;
+              }
+
+
+                utils.query(connection, res,
+                        `SELECT c.content_id,c.*, u.user_name,u.profile_dir, ifnull(cl.is_like,0) AS is_like
+                         FROM (contents c, user_info u)
+                         LEFT OUTER JOIN content_like cl
+                         ON cl.user_id = ? && cl.content_id = c.content_id
+                         WHERE c.user_id = ? && c.user_id = u.user_id
+                         ORDER BY c.create_at DESC`, [user_id, user_id])
+                    .then((result) => {
+                        if (result.length === 0) {
+                            connection.release()
+                            res.status(200).json({
+                                meta: {
+                                    code: 200,
+                                    message: "제가 쓴 글이 없습니다"
+                                }
+                            })
+
+                        } else {
+                            connection.release()
+                            res.status(200).json(utils.toRes(utils.SUCCESS, {
+                                myContentsCount: result.length,
+                                myContents: result,
+                                friend_status : isSend
+                            }))
+
                         }
                     })
-
-                } else {
-                    connection.release()
-                    res.status(200).json(utils.toRes(utils.SUCCESS, {
-                        myContentsCount: result.length,
-                        myContents: result
-                    }))
-
-                }
             })
+        })
     })
 })
 
@@ -213,7 +244,7 @@ router.get('/around', (req, res) => {
                             } else {
                                 connection.release()
                                 res.status(200).json(utils.toRes(utils.SUCCESS, {
-                                    nextpage:"http://13.124.115.238:8080/contents/around/page/30",
+                                    nextpage: "http://13.124.115.238:8080/contents/around/page/30",
                                     data: aroundResult
                                 }))
 

@@ -115,7 +115,7 @@ router.get('/receive',(req,res)=>{
   })
 })
 
-
+//친구 목록
 router.get('/friends',(req,res)=>{
   var user_id = req.authorizationId;
 //user_status 가 1이면 친구
