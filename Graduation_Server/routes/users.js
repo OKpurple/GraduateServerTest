@@ -116,6 +116,7 @@ router.post('/login',(req,res)=>{
           connection.release();
           return res.status(200).json(utils.toRes(utils.SUCCESS,
           {
+	      user_id : result[0].user_id,
               token : token
           }
         ));

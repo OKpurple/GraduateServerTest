@@ -3,7 +3,7 @@
   "host"     : "13.124.115.238",
   "user"     : "we",
   "password" : "wearetogether",
-  "database" : "GraduateTest",
+  "database" : "GraduateServer",
   "multipleStatements" : true,
   "connectionLimit"     : 20,
   "waitForConnections"   : true

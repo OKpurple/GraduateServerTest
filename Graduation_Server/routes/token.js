@@ -24,6 +24,7 @@ router.get('/',(req,res)=>{
                     utils.toRes(
                         utils.SUCCESS,
                         {
+			    user_id : decoded.user_id,
                             token : token
                         }
                     )

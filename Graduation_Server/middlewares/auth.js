@@ -36,7 +36,7 @@ var authMiddleware = (req,res,next) => {
 
       utils.query(connection,res,`SELECT * FROM Invalid_token WHERE Invalid_token = ?`,[token])
       .then((selectResult)=>{
-
+	connection.release()
         if(selectResult.length === 0){
           new Promise((resolve,reject)=>{
             jwt.verify(token, TOKEN_KEY,(err,decoded)=>{
