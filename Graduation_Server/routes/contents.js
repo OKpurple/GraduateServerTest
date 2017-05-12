@@ -15,7 +15,7 @@ var _storage = multer.diskStorage({
 });
 const TOKEN_KEY = "jwhtoken"
 
-//모든 글 보기
+//모든 글 보기//안씀
 router.get('/test', (req, res) => {
     utils.dbConnect(res).then((connection) => {
         utils.query(connection, res,
@@ -54,7 +54,7 @@ router.get('/friend', (req, res) => {
                     'UPDATE user_posi SET lat = ? , lng = ? WHERE user_id = ?', [latitude, longitude, user_id])
                 .then((updateresult) => {
                     utils.query(connection, res,
-                            `SELECT c.*, u.user_name, u.profile_dir, ifnull(cl.is_like,0) AS is_like,
+                            `SELECT c.*, u.user_name, u.profile_dir,u.login_id, ifnull(cl.is_like,0) AS is_like,
                           (SELECT IF(ur.res_user_id = ?, ur.req_user_id, ur.res_user_id) as friend
                            FROM user_relations ur
                            WHERE relation_status = 1 AND ur.res_user_id = ? OR ur.req_user_id = ?) my
@@ -105,7 +105,7 @@ router.get('/around/page/:pagecnt', (req, res) => {
                 'UPDATE user_posi SET lat = ? , lng = ? WHERE user_id = ?', [latitude, longitude, user_id])
             .then((updateresult) => {
                 utils.query(connection, res,
-                        `SELECT c.*, u.user_name, u.profile_dir, ifnull(cl.is_like,0) AS is_like
+                        `SELECT c.*, u.user_name, u.profile_dir,u.login_id, ifnull(cl.is_like,0) AS is_like
                     FROM (SELECT user_id FROM user_posi WHERE user_id != ? AND ( 6371 * acos( cos( radians(?) ) * cos( radians( lat ) ) * cos( radians( lng ) - radians(?) ) + sin( radians(?) ) * sin( radians( lat ) ) ) )< 1) up,
                     user_info u, pagenation pn,contents c
                     LEFT OUTER JOIN content_like cl
@@ -148,34 +148,34 @@ router.get('/:userId/info', function(req, res) {
     console.log(user_id + "의 글보기");
 
 
-    var isSend;
+    var friend_status;
     utils.dbConnect(res).then((connection) => {
         utils.query(connection, res, `
           SELECT *
           FROM user_relations ur
           WHERE ur.req_user_id = ? AND ur.res_user_id = ? AND ur.relation_status != 1`, [my_id, user_id]).then((relationRes) => {
             if (relationRes.length === 0) {
-                isSend = 0; //친구아님
+                friend_status = 0; //친구아님
             } else {
-                isSend = 1; //친구요청
+                friend_status = 1; //친구요청
             }
 
             utils.query(connection, res, `
-              SELECT * FROEM user_relations WHERE res_user_id = ? AND req_user_id = ?
+              SELECT * FROM user_relations WHERE res_user_id = ? AND req_user_id = ?
               UNION
               SELECT * FROM user_relations WHERE req_user_id = ? ANd res_user_id = ?
               `, [my_id,user_id,my_id,user_id]).then((resss) => {
 
 
               if(resss.length === 0){
-                isSend = 0;
+                friend_status = 0;
               }else{
-                isSend = 2;
+                friend_status = 2;
               }
 
 
                 utils.query(connection, res,
-                        `SELECT c.content_id,c.*, u.user_name,u.profile_dir, ifnull(cl.is_like,0) AS is_like
+                        `SELECT c.content_id,c.*, u.user_name,u.login_id,u.profile_dir, ifnull(cl.is_like,0) AS is_like
                          FROM (contents c, user_info u)
                          LEFT OUTER JOIN content_like cl
                          ON cl.user_id = ? && cl.content_id = c.content_id
@@ -225,13 +225,13 @@ router.get('/around', (req, res) => {
                     'UPDATE user_posi SET lat = ? , lng = ? WHERE user_id = ?', [latitude, longitude, user_id])
                 .then((updateresult) => {
                     utils.query(connection, res,
-                            `SELECT c.*, u.user_name, u.profile_dir, ifnull(cl.is_like,0) AS is_like
+                            `SELECT c.*, u.user_name,u.login_id, u.profile_dir, ifnull(cl.is_like,0) AS is_like
                             FROM (SELECT user_id FROM user_posi WHERE user_id != ? AND ( 6371 * acos( cos( radians(?) ) * cos( radians( lat ) ) * cos( radians( lng ) - radians(?) ) + sin( radians(?) ) * sin( radians( lat ) ) ) )< 1) up,
                             user_info u, pagenation pn,contents c
                             LEFT OUTER JOIN content_like cl
                             ON cl.user_id = ? && cl.content_id = c.content_id
-                            WHERE c.user_id = up.user_id AND c.user_id = u.user_id AND c.user_id != ? AND c.create_at < pn.search_time
-                            ORDER BY c.create_at DESC, c.content_id DESC LIMIT 0, 29`, [user_id, latitude, longitude, latitude, user_id, user_id])
+                            WHERE c.user_id = up.user_id AND c.user_id = u.user_id AND  c.create_at < pn.search_time
+                            ORDER BY c.create_at DESC, c.content_id DESC LIMIT 0, 29`, [user_id, latitude, longitude, latitude, user_id])
                         .then(aroundResult => {
                             if (aroundResult.length === 0) {
                                 connection.release();
@@ -291,7 +291,7 @@ router.post('/', function(req, res) {
                     `UPDATE user_posi SET lat=?,lng=? WHERE user_id =?`, [lat, lng, user_id])
                 .then((updateRes) => {
                     utils.query(connection, res,
-                        `INSERT INTO contents(user_id,content_text,create_at,share_range,location_range,image_dir) VALUES (?, ?, ?, ?, ?, ?)`, [user_id, content_text, create_at, share_range, location_range, image_dir]).then((insertRes) => {
+                        `INSERT INTO contents(user_id,content_text,create_at,share_range,location_range,image_dir,lng,lat) VALUES (?, ?, ?, ?, ?, ?,?,?)`, [user_id, content_text, create_at, share_range, location_range, image_dir,lng,lat]).then((insertRes) => {
                         connection.release()
                         return res.status(200).json(utils.toRes(utils.SUCCESS, {
                             update: updateRes,
@@ -318,14 +318,14 @@ router.delete('/:content_id', (req, res) => {
             })
     })
 })
-//좋아요 누르기 취소
+//좋아요 누르기 /취소
 router.post('/like', (req, res) => {
     var user_id = req.authorizationId;
     var content_id = req.body.content_id;
     var is_like = req.body.is_like;
 
     utils.dbConnect(res).then((conn) => {
-        if (is_like === 0) {
+        if (is_like == 0) {
             utils.query(conn, res, `INSERT INTO content_like(user_id,content_id,is_like) VALUES(?,?,?)`, [user_id, content_id, is_like])
                 .then((insertRes) => {
                     utils.query(conn, res, `UPDATE contents SET like_cnt = like_cnt + 1 WHERE content_id = ?`, [content_id])
@@ -371,8 +371,11 @@ router.post('/:contentId/reply', (req, res) => {
     utils.dbConnect(res).then((conn) => {
         utils.query(conn, res, `INSERT INTO content_reply(content_id,user_id,reply) VALUES(?,?,?)`, [content_id, user_id, reply])
             .then((insertRes) => {
-                conn.release();
-                res.status(200).json(utils.SUCCESS);
+                utils.query(conn,res,`UPDATE contents SET reply_id = reply_id + 1 WHERE content_id =?`,[content_id]).then((updateRes)=>{
+                  conn.release();
+                  res.status(200).json(utils.SUCCESS);
+                })
+
             })
     })
 
@@ -394,7 +397,6 @@ router.get('/:contentId/reply', (req, res) => {
                 res.json(utils.toRes(util.SUCCESS, {
                     data: result
                 }))
-
             })
     })
 })
@@ -407,8 +409,10 @@ router.delete('/:contentId/reply', (req, res) => {
     utils.dbConnect(res).then((conn) => {
         utils.query(conn, res, `DELETE FROM content_reply WHERE user_id = ? AND content_id = ?`, [user_id, content_id])
             .then((result) => {
+              utils.query(conn,res,`UPDATE contents SET reply_id = (reply_id-1) WHERE content_id = ?`,[content_id]).then((updateRes)=>{
                 conn.release();
                 res.json(utils.SUCCESS);
+              })
             })
     })
 })

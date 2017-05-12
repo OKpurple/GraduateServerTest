@@ -19,6 +19,31 @@ var storage = multer.diskStorage({
 
 
 
+router.get('/:userId/info',(req,res)=>{
+  var user_id = req.params.userId;
+
+  utils.dbConnect(res).then((conn)=>{
+    utils.query(conn,res,`SELECT * FROM user_info WHERE user_id =?`,[user_id]).then((result)=>{
+      if(result === 0 ){
+        conn.release()
+        res.json({
+          meta : {
+            code : -30,
+            message : "없는 회원"
+          }
+        })
+      }else{
+        res.json(utils.toRes(utils.SUCCESS,{
+          data : result
+        }))
+      }
+
+    })
+
+  })
+
+})
+
 
 
 //회원 등록
@@ -183,6 +208,7 @@ router.get('/my',(req,res)=>{
     })
   })
 })
+
 
 
 //프로필 업데이트
