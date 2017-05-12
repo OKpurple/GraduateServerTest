@@ -196,7 +196,7 @@ router.get('/:userId/info', function(req, res) {
                             res.status(200).json(utils.toRes(utils.SUCCESS, {
                                 myContentsCount: result.length,
                                 myContents: result,
-                                friend_status : isSend
+                                friend_status : friend_status
                             }))
 
                         }
@@ -226,12 +226,12 @@ router.get('/around', (req, res) => {
                 .then((updateresult) => {
                     utils.query(connection, res,
                             `SELECT c.*, u.user_name,u.login_id, u.profile_dir, ifnull(cl.is_like,0) AS is_like
-                            FROM (SELECT user_id FROM user_posi WHERE user_id != ? AND ( 6371 * acos( cos( radians(?) ) * cos( radians( lat ) ) * cos( radians( lng ) - radians(?) ) + sin( radians(?) ) * sin( radians( lat ) ) ) )< 1) up,
+                            FROM (SELECT user_id FROM user_posi WHERE ( 6371 * acos( cos( radians(?) ) * cos( radians( lat ) ) * cos( radians( lng ) - radians(?) ) + sin( radians(?) ) * sin( radians( lat ) ) ) )< 1) up,
                             user_info u, pagenation pn,contents c
                             LEFT OUTER JOIN content_like cl
                             ON cl.user_id = ? && cl.content_id = c.content_id
                             WHERE c.user_id = up.user_id AND c.user_id = u.user_id AND  c.create_at < pn.search_time
-                            ORDER BY c.create_at DESC, c.content_id DESC LIMIT 0, 29`, [user_id, latitude, longitude, latitude, user_id])
+                            ORDER BY c.create_at DESC, c.content_id DESC LIMIT 0, 29`, [latitude, longitude, latitude, user_id])
                         .then(aroundResult => {
                             if (aroundResult.length === 0) {
                                 connection.release();
@@ -326,7 +326,7 @@ router.post('/like', (req, res) => {
 
     utils.dbConnect(res).then((conn) => {
         if (is_like == 0) {
-            utils.query(conn, res, `INSERT INTO content_like(user_id,content_id,is_like) VALUES(?,?,?)`, [user_id, content_id, is_like])
+            utils.query(conn, res, `INSERT INTO content_like(user_id,content_id,is_like) VALUES(?,?,1)`, [user_id, content_id])
                 .then((insertRes) => {
                     utils.query(conn, res, `UPDATE contents SET like_cnt = like_cnt + 1 WHERE content_id = ?`, [content_id])
                         .then((updateRes) => {
