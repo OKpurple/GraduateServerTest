@@ -364,14 +364,14 @@ router.post('/:contentId/reply', (req, res) => {
         return res.status(400).json(utils.INVALID_REQUEST);
     }
 
-    if (140 < stringLength(reply.trim()) || stringLength(reply.trim()) < 1) {
-        return res.status(400).json(utils.INVALID_REQUEST);
-    }
+   // if (140 < reply.trim().length() || stringLength(reply.trim()) < 1) {
+     //   return res.status(400).json(utils.INVALID_REQUEST);
+    //}
 
     utils.dbConnect(res).then((conn) => {
         utils.query(conn, res, `INSERT INTO content_reply(content_id,user_id,reply) VALUES(?,?,?)`, [content_id, user_id, reply])
             .then((insertRes) => {
-                utils.query(conn,res,`UPDATE contents SET reply_id = reply_id + 1 WHERE content_id =?`,[content_id]).then((updateRes)=>{
+                utils.query(conn,res,`UPDATE contents SET reply_cnt = reply_cnt + 1 WHERE content_id =?`,[content_id]).then((updateRes)=>{
                   conn.release();
                   res.status(200).json(utils.SUCCESS);
                 })
@@ -394,7 +394,7 @@ router.get('/:contentId/reply', (req, res) => {
       ORDER BY create_at DESC`, [content_id])
             .then((result) => {
                 conn.release();
-                res.json(utils.toRes(util.SUCCESS, {
+                res.json(utils.toRes(utils.SUCCESS, {
                     data: result
                 }))
             })
@@ -409,7 +409,7 @@ router.delete('/:contentId/reply', (req, res) => {
     utils.dbConnect(res).then((conn) => {
         utils.query(conn, res, `DELETE FROM content_reply WHERE user_id = ? AND content_id = ?`, [user_id, content_id])
             .then((result) => {
-              utils.query(conn,res,`UPDATE contents SET reply_id = (reply_id-1) WHERE content_id = ?`,[content_id]).then((updateRes)=>{
+              utils.query(conn,res,`UPDATE contents SET reply_cnt = (reply_cnt-1) WHERE content_id = ?`,[content_id]).then((updateRes)=>{
                 conn.release();
                 res.json(utils.SUCCESS);
               })
