@@ -307,6 +307,7 @@ router.post('/', function(req, res) {
 router.delete('/:content_id', (req, res) => {
     var content_id = req.params.content_id;
     var user_id = req.authorizationId;
+	console.log(content_id +'유저아이디'+ user_id+"삭제를원함") 
     utils.dbConnect(res).then((connection) => {
         utils.query(connection, res, `DELETE FROM contents WHERE content_id = ? AND user_id = ?`, [content_id, user_id])
             .then((result) => {
@@ -402,16 +403,20 @@ router.get('/:contentId/reply', (req, res) => {
 })
 
 //리플 삭제
-router.delete('/:contentId/reply', (req, res) => {
-    let content_id = req.params.contentId;
+router.delete('/:replyId/reply', (req, res) => {
+    let reply_id = req.params.replyId;
     let user_id = req.authorizationId;
-
+    
     utils.dbConnect(res).then((conn) => {
-        utils.query(conn, res, `DELETE FROM content_reply WHERE user_id = ? AND content_id = ?`, [user_id, content_id])
-            .then((result) => {
-              utils.query(conn,res,`UPDATE contents SET reply_cnt = (reply_cnt-1) WHERE content_id = ?`,[content_id]).then((updateRes)=>{
+
+
+        utils.query(conn, res,`UPDATE contents SET reply_cnt = (reply_cnt-1) WHERE content_id = (SELECT content_id FROM content_reply WHERE reply_id = ? )`,[reply_id]).then((result) => {
+	console.log(`reply_id = `+ reply_id + `댓글 수정합니다`) 
+              utils.query(conn,res,`DELETE FROM content_reply WHERE user_id = ? AND reply_id = ?`, [user_id, reply_id]).then((updateRes)=>{
                 conn.release();
-                res.json(utils.SUCCESS);
+                res.json(utils.toRes(utils.SUCCESS,{
+			data : updateRes
+		}));
               })
             })
     })
