@@ -43,7 +43,7 @@ router.get('/friend', (req, res) => {
     var user_id = req.authorizationId
     var latitude = req.query.lat;
     var longitude = req.query.lng;
-
+    console.log("contents/friend 친구글 보기");
 
     //위치 업데이트
     utils.dbConnect(res).then((connection) => {
@@ -91,7 +91,7 @@ router.get('/friend', (req, res) => {
 
 //페이지 네이션
 router.get('/around/page/:pagecnt', (req, res) => {
-
+console.log("contents/around/page/:pagecnt  페이지네이션")
     var user_id = req.authorizationId
     var startPage = parseInt(req.params.pagecnt);
     var endPage = startPage + 29;
@@ -145,7 +145,7 @@ router.get('/around/page/:pagecnt', (req, res) => {
 router.get('/:userId/info', function(req, res) {
     var my_id = req.authorizationId;
     var user_id = req.params.userId;
-    console.log(user_id + "의 글보기");
+    console.log("contents/:userId/info " + user_id + " 의 글보기");
 
 
     var friend_status;
@@ -182,23 +182,21 @@ router.get('/:userId/info', function(req, res) {
                          WHERE c.user_id = ? && c.user_id = u.user_id
                          ORDER BY c.create_at DESC`, [user_id, user_id])
                     .then((result) => {
+                      connection.release()
                         if (result.length === 0) {
-                            connection.release()
+
                             res.status(200).json({
                                 meta: {
                                     code: 200,
                                     message: "제가 쓴 글이 없습니다"
                                 }
                             })
-
                         } else {
-                            connection.release()
                             res.status(200).json(utils.toRes(utils.SUCCESS, {
                                 myContentsCount: result.length,
                                 myContents: result,
                                 friend_status : friend_status
                             }))
-
                         }
                     })
             })
@@ -214,7 +212,7 @@ router.get('/around', (req, res) => {
     var latitude = req.query.lat;
     var longitude = req.query.lng;
     var search_time = utils.getTimeStamp();
-
+  console.log("contents/around 주변글보기 user_id = " +user_id + ", "+ longitude + ", "+latitude);
 
     //위치 업데이트
     utils.dbConnect(res).then((connection) => {
@@ -270,6 +268,8 @@ router.post('/', function(req, res) {
     var crtime = utils.getTimeTime();
     var trimCreateAt = crdate + crtime;
     req.params.create_at = trimCreateAt;
+
+    console.log("contents/ 글쓰기 post");
     // 동기식으로 업로드 후 쿼리 실행하는방법?
     upload(req, res, (err) => {
         var content_text = req.body.content_text;
@@ -307,7 +307,10 @@ router.post('/', function(req, res) {
 router.delete('/:content_id', (req, res) => {
     var content_id = req.params.content_id;
     var user_id = req.authorizationId;
-	console.log(content_id +'유저아이디'+ user_id+"삭제를원함") 
+
+
+    console.log("contents/ delete 글삭제 user_id = " + user_id);
+
     utils.dbConnect(res).then((connection) => {
         utils.query(connection, res, `DELETE FROM contents WHERE content_id = ? AND user_id = ?`, [content_id, user_id])
             .then((result) => {
@@ -324,7 +327,7 @@ router.post('/like', (req, res) => {
     var user_id = req.authorizationId;
     var content_id = req.body.content_id;
     var is_like = req.body.is_like;
-
+console.log("contents/like "+ user_id + "의 " + content_id + "좋아요 누르기 /취소");
     utils.dbConnect(res).then((conn) => {
         if (is_like == 0) {
             utils.query(conn, res, `INSERT INTO content_like(user_id,content_id,is_like) VALUES(?,?,1)`, [user_id, content_id])
@@ -364,10 +367,9 @@ router.post('/:contentId/reply', (req, res) => {
     if (reply === undefined || reply.trim() === "") {
         return res.status(400).json(utils.INVALID_REQUEST);
     }
+    console.log("contents/reply 리플등록 userid = "+user_id +"content Id = "+ content_id);
 
-   // if (140 < reply.trim().length() || stringLength(reply.trim()) < 1) {
-     //   return res.status(400).json(utils.INVALID_REQUEST);
-    //}
+
 
     utils.dbConnect(res).then((conn) => {
         utils.query(conn, res, `INSERT INTO content_reply(content_id,user_id,reply) VALUES(?,?,?)`, [content_id, user_id, reply])
@@ -385,7 +387,7 @@ router.post('/:contentId/reply', (req, res) => {
 router.get('/:contentId/reply', (req, res) => {
     let content_id = req.params.contentId;
     //let user_id =  authorizationId;
-
+    console.log("contents/reply 리플 보기 contentid = " + content_id);
     utils.dbConnect(res).then((conn) => {
         utils.query(conn, res, `SELECT cr.*, u.user_name, u.profile_dir
       FROM content_reply cr
@@ -406,12 +408,15 @@ router.get('/:contentId/reply', (req, res) => {
 router.delete('/:replyId/reply', (req, res) => {
     let reply_id = req.params.replyId;
     let user_id = req.authorizationId;
-    
+
+
+    console.log("contents/reply reply id = "+ reply_id+ "user_id = "+user_id);
+
     utils.dbConnect(res).then((conn) => {
 
 
         utils.query(conn, res,`UPDATE contents SET reply_cnt = (reply_cnt-1) WHERE content_id = (SELECT content_id FROM content_reply WHERE reply_id = ? )`,[reply_id]).then((result) => {
-	console.log(`reply_id = `+ reply_id + `댓글 수정합니다`) 
+	console.log(`reply_id = `+ reply_id + `댓글 수정합니다`)
               utils.query(conn,res,`DELETE FROM content_reply WHERE user_id = ? AND reply_id = ?`, [user_id, reply_id]).then((updateRes)=>{
                 conn.release();
                 res.json(utils.toRes(utils.SUCCESS,{
