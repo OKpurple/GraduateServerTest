@@ -231,8 +231,9 @@ router.get('/around', (req, res) => {
                             WHERE c.user_id = up.user_id AND c.user_id = u.user_id AND  c.create_at < pn.search_time
                             ORDER BY c.create_at DESC, c.content_id DESC LIMIT 0, 29`, [latitude, longitude, latitude, user_id])
                         .then(aroundResult => {
+                            connection.release();
                             if (aroundResult.length === 0) {
-                                connection.release();
+
                                 res.status(201).json({
                                     meta: {
                                         code: 201,
@@ -240,7 +241,7 @@ router.get('/around', (req, res) => {
                                     }
                                 })
                             } else {
-                                connection.release()
+
                                 res.status(200).json(utils.toRes(utils.SUCCESS, {
                                     nextpage: "http://13.124.115.238:8080/contents/around/page/30",
                                     data: aroundResult

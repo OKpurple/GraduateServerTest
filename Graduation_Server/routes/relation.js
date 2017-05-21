@@ -7,6 +7,8 @@ const TOKEN_KEY = "jwhtoken"
 
 router.get('/send',(req,res)=>{
   var req_user_id = req.authorizationId;
+
+    console.log(req_user_id + '의 친구 요청목록')
   utils.dbConnect(res).then((conn)=>{
     utils.query(conn,res,
       `SELECT ur.res_user_id, u.user_name, u.profile
@@ -40,6 +42,7 @@ router.get('/send',(req,res)=>{
 router.post('/send',(req,res)=>{
   var req_user_id = req.authorizationId;
   var res_user_id = req.body.opponent_id;
+
  console.log("req = " + req_user_id + ", res = " + res_user_id + "친구요청")
   utils.dbConnect(res).then((conn)=>{
     utils.query(conn,res,`SELECT * FROM user_info WHERE user_id = ?`,[res_user_id])
@@ -73,7 +76,7 @@ router.post('/send',(req,res)=>{
 router.post('/receive',(req,res)=>{
   var res_user_id = req.authorizationId;
   var req_user_id = req.body.opponent_id;
-
+console.log(`res = ` + res_user_id + `req = `+req_user_id+ '친구 수락하기')
   utils.dbConnect(res).then((conn)=>{
     utils.query(conn,res,'UPDATE user_relations SET relation_status = 1 WHERE req_user_id = ?, res_user_id =?',[req_user_id,res_user_id])
     .then((result)=>{
@@ -85,6 +88,8 @@ router.post('/receive',(req,res)=>{
 
 router.get('/receive',(req,res)=>{
   var res_user_id = req.authorizationId;
+
+  console.log(res_user_id + '가 친구 받은목록')
   utils.dbConnect(res).then((conn)=>{
     utils.query(conn,res,
       `SELECT ur.req_user_id, u.user_name, u.profile
@@ -118,6 +123,7 @@ router.get('/receive',(req,res)=>{
 //친구 목록
 router.get('/friends',(req,res)=>{
   var user_id = req.authorizationId;
+  console.log('relation/friends 친구목록')
 //user_status 가 1이면 친구
   utils.dbConnect(res).then((conn)=>{
     utils.query(conn,res,
@@ -137,7 +143,7 @@ router.get('/friends',(req,res)=>{
 router.delete('/',(req,res)=>{
   var user_id = req.authorizationId;
   var opponent_id = req.body.opponent_id;
-
+ console.log(user_id + '친구 (요청)삭제 '+opponent_id)
   utils.dbConnect(res).then((conn)=>{
     utils.query(conn,res,`DELETE FROM user_relations WHERE (req_user_id = ? AND res_user_id = ?) OR (req_user_id = ? AND res_user_id=?)`,[user_id, opponent_id,opponent_id,user_id])
     .then((result)=>{

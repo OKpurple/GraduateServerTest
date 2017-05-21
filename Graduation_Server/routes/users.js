@@ -21,11 +21,11 @@ var storage = multer.diskStorage({
 
 router.get('/:userId/info',(req,res)=>{
   var user_id = req.params.userId;
-
+  console.log(":userId/info" + user_id + "정보 보기");
   utils.dbConnect(res).then((conn)=>{
     utils.query(conn,res,`SELECT * FROM user_info WHERE user_id =?`,[user_id]).then((result)=>{
+      conn.release()
       if(result === 0 ){
-        conn.release()
         res.json({
           meta : {
             code : -30,
@@ -37,6 +37,7 @@ router.get('/:userId/info',(req,res)=>{
           data : result
         }))
       }
+
 
     })
 
@@ -54,9 +55,10 @@ router.post('/regist',(req,res)=>{
       var user_name = req.body.user_name;
       var public_range = req.body.public_range;
 
+
       let salt = bcrypt.genSaltSync(10);
       let passwordHash = bcrypt.hashSync(login_pw,salt);
-
+        console.log(login_id + "regist")
       if (   login_pw=== undefined ||
            login_id === undefined ) {
         return res.status(400).json(utils.INVALID_REQUEST);
@@ -111,7 +113,9 @@ router.post('/regist',(req,res)=>{
 router.post('/login',(req,res)=>{
   var login_id = req.body.login_id;
   var login_pw = req.body.login_pw;
-  console.log(login_id);
+
+
+  console.log(login_id+` login`);
   if(login_id===undefined){
     return res.status(400).json(utils.toRes(utils.INVALID_REQUEST));
   }
@@ -167,6 +171,7 @@ router.post('/login',(req,res)=>{
 router.delete('/:user_id',(req,res)=>{
   let token = req.headers.authorization;
   let decoded = jwt.verify(token, TOKEN_KEY);
+    console.log(`logout`);
   try{
   utils.dbConnect(res).then((conn)=>{
     utils.query(conn,res,`INSERT INTO Invalid_token(Invalid_token,expired_to) VALUES(?,FROM_UNIXTIME(?))`,[token,decoded.exp])
@@ -186,7 +191,7 @@ router.get('/my',(req,res)=>{
 
   let user_id = req.authorizationId;
   console.log(user_id);
-
+  console.log(`users/my`+user_id + '내글보기 업데이트')
   utils.dbConnect(res).then((connection)=>{
     utils.query(connection,res,
     'SELECT * from user_info WHERE user_id = ?',[user_id]).then((result)=>{
@@ -221,7 +226,7 @@ router.post('/profile', (req, res) => {
     var crtime = utils.getTimeTime();
     var trimCreateAt = crdate + crtime;
     req.params.create_at = trimCreateAt;
-
+    console.log(user_id + "ㅍ프로필 업데이트")
     upload(req, res, (err) => {
 
         var profile_dir = 'http://13.124.115.238:8080/profiles/' + user_id + "-"+trimCreateAt+ "-" + 'profile.png';
@@ -247,7 +252,9 @@ router.post('/position', function(req, res) {
     var user_id = req.authorizationId
     var latitude = req.body.lat;
     var longitude = req.body.lng;
-    console.log(latitude + ','+longitude);
+
+    console.log(user_id + '위치 업데이트'+latitude + ','+longitude);
+
     utils.dbConnect(res).then((connection)=>{
       utils.query(connection,res,`SELECT * from user_posi WHERE user_id = ?`,[user_id])
       .then((selectRes)=>{
@@ -279,6 +286,7 @@ router.post('/position', function(req, res) {
 
   //모든유저
   router.get('/', (req,res) =>{
+      console.log(`users/ 모든유저보기`)
     utils.dbConnect(res).then((connection)=>{
       utils.query(connection,res,
         `SELECT * FROM user_info`)
