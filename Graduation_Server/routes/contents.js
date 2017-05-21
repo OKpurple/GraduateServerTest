@@ -188,7 +188,8 @@ router.get('/:userId/info', function(req, res) {
                             res.status(200).json({
                                 meta: {
                                     code: 200,
-                                    message: "제가 쓴 글이 없습니다"
+                                    message: "쓴 글이 없습니다",
+                                    friend_status : friend_status
                                 }
                             })
                         } else {

@@ -148,7 +148,7 @@ router.delete('/',(req,res)=>{
     utils.query(conn,res,`DELETE FROM user_relations WHERE (req_user_id = ? AND res_user_id = ?) OR (req_user_id = ? AND res_user_id=?)`,[user_id, opponent_id,opponent_id,user_id])
     .then((result)=>{
       conn.release();
-      db.json(utils.toRes(utils.SUCCESS,{
+      res.json(utils.toRes(utils.SUCCESS,{
         delete : result
       }))
     })
