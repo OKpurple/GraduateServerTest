@@ -93,7 +93,7 @@ router.get('/receive',(req,res)=>{
   utils.dbConnect(res).then((conn)=>{
     utils.query(conn,res,
       `SELECT ur.req_user_id, u.user_name, u.profile
-       FROM uesr_relations uro
+       FROM user_relations uro
        LEFT OUTER JOIN user_info u
        ON ur.req_user_id = u.user_id
        WHERE ur.res_user_id = ? AND ur.relation_status = 0`,[res_user_id])

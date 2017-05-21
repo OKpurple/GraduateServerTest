@@ -151,24 +151,23 @@ router.get('/:userId/info', function(req, res) {
     var friend_status;
     utils.dbConnect(res).then((connection) => {
         utils.query(connection, res, `
-          SELECT *
-          FROM user_relations ur
-          WHERE ur.req_user_id = ? AND ur.res_user_id = ? AND ur.relation_status != 1`, [my_id, user_id]).then((relationRes) => {
+          SELECT * FROM user_relations ur
+          WHERE ur.req_user_id = ? AND ur.res_user_id = ? AND relation_status = 1
+          UNION
+          SELECT * FROM user_relations ur
+          WHERE ur.req_user_id = ? AND ur.res_user_id = ? AND relation_status = 1`, [my_id, user_id,user_id,my_id]).then((relationRes) => {
             if (relationRes.length === 0) {
                 friend_status = 0; //친구아님
-            } else {
-                friend_status = 1; //친구요청
+            }else{
+              friend_status = 2; //친구임
             }
-
             utils.query(connection, res, `
-              SELECT * FROM user_relations WHERE res_user_id = ? AND req_user_id = ? AND relation_status = 2 UNION SELECT * FROM user_relations WHERE req_user_id = ? ANd res_user_id = ? AND relation_status = 2 
-              `, [my_id,user_id,my_id,user_id]).then((resss) => {
+              SELECT * FROM user_relations WHERE req_user_id = ? AND res_user_id = ? AND relation_status = 0
+              `, [my_id,user_id]).then((resss) => {
 
 
-              if(resss.length === 0){
-                friend_status = 0;
-              }else{
-                friend_status = 2;
+              if(resss.length !== 0){
+                friend_status = 1; // 친구 요청 보냈음
               }
 
 
@@ -187,9 +186,9 @@ router.get('/:userId/info', function(req, res) {
                                 meta: {
                                     code: 200,
                                     message: "쓴 글이 없습니다"
-                           
+
                                 },
-				  friend_status : friend_status
+                        				friend_status : friend_status
                             })
                         } else {
                             res.status(200).json(utils.toRes(utils.SUCCESS, {
