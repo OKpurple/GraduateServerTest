@@ -140,7 +140,7 @@ router.get('/friends',(req,res)=>{
   })
 })
 
-router.delete('/',(req,res)=>{
+router.post('/',(req,res)=>{
   var user_id = req.authorizationId;
   var opponent_id = req.body.opponent_id;
  console.log(user_id + '친구 (요청)삭제 '+opponent_id)

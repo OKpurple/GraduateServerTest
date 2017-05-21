@@ -161,9 +161,7 @@ router.get('/:userId/info', function(req, res) {
             }
 
             utils.query(connection, res, `
-              SELECT * FROM user_relations WHERE res_user_id = ? AND req_user_id = ?
-              UNION
-              SELECT * FROM user_relations WHERE req_user_id = ? ANd res_user_id = ?
+              SELECT * FROM user_relations WHERE res_user_id = ? AND req_user_id = ? AND relation_status = 2 UNION SELECT * FROM user_relations WHERE req_user_id = ? ANd res_user_id = ? AND relation_status = 2 
               `, [my_id,user_id,my_id,user_id]).then((resss) => {
 
 
@@ -188,9 +186,10 @@ router.get('/:userId/info', function(req, res) {
                             res.status(200).json({
                                 meta: {
                                     code: 200,
-                                    message: "쓴 글이 없습니다",
-                                    friend_status : friend_status
-                                }
+                                    message: "쓴 글이 없습니다"
+                           
+                                },
+				  friend_status : friend_status
                             })
                         } else {
                             res.status(200).json(utils.toRes(utils.SUCCESS, {
