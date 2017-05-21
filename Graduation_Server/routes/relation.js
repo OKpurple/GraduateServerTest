@@ -39,8 +39,8 @@ router.get('/send',(req,res)=>{
 
 router.post('/send',(req,res)=>{
   var req_user_id = req.authorizationId;
-  var res_user_id = req.opponent_id;
-
+  var res_user_id = req.body.opponent_id;
+ console.log("req = " + req_user_id + ", res = " + res_user_id + "친구요청")
   utils.dbConnect(res).then((conn)=>{
     utils.query(conn,res,`SELECT * FROM user_info WHERE user_id = ?`,[res_user_id])
     .then((selectRes)=>{
@@ -50,17 +50,17 @@ router.post('/send',(req,res)=>{
           message : "없는 회원"
         }))
       }else{
-        utils.query(conn,res,`SELECT * FROM user_relations WHERE req_user_id =?, res_user_id =?`,[req_user_id,res_user_id])
+        utils.query(conn,res,`SELECT * FROM user_relations WHERE req_user_id =? AND res_user_id =?`,[req_user_id,res_user_id])
         .then((selRes)=>{
           if(selRes.length === 0){
             utils.query(conn,res,`INSERT INTO user_relations(req_user_id, res_user_id,relation_status) VALUES(?,?,0)`,[req_user_id,res_user_id])
             .then((fRes)=>{
               conn.release();
-              utils.json(utils.SUCCESS);
+              res.json(utils.SUCCESS);
             })
           }else{
             conn.release();
-            utils.json(utils.toRes(utils.INVALID_REQUEST,{
+            res.json(utils.toRes(utils.INVALID_REQUEST,{
               message : "이미 친구"
             }))
           }
@@ -72,7 +72,7 @@ router.post('/send',(req,res)=>{
 
 router.post('/receive',(req,res)=>{
   var res_user_id = req.authorizationId;
-  var req_user_id = req.opponent_id;
+  var req_user_id = req.body.opponent_id;
 
   utils.dbConnect(res).then((conn)=>{
     utils.query(conn,res,'UPDATE user_relations SET relation_status = 1 WHERE req_user_id = ?, res_user_id =?',[req_user_id,res_user_id])
@@ -136,7 +136,7 @@ router.get('/friends',(req,res)=>{
 
 router.delete('/',(req,res)=>{
   var user_id = req.authorizationId;
-  var opponent_id = req.opponent_id;
+  var opponent_id = req.body.opponent_id;
 
   utils.dbConnect(res).then((conn)=>{
     utils.query(conn,res,`DELETE FROM user_relations WHERE (req_user_id = ? AND res_user_id = ?) OR (req_user_id = ? AND res_user_id=?)`,[user_id, opponent_id,opponent_id,user_id])
@@ -151,7 +151,7 @@ router.delete('/',(req,res)=>{
 
 router.put('/friend',(req,res)=>{
   var user_id = req.authorizationId;
-  var opponent_id = req.opponent_id;
+  var opponent_id = req.body.opponent_id;
 
   utils.dbConnect(res).then((conn)=>{
     utils.query(conn,res,'UPDATE user_relations SET relation_status = 2 WHERE (req_user_id = ? AND res_user_id =?) OR (req_user_id = ? AND res_user_id=?)',[user_id,opponent_id,opponent_id,user_id])
