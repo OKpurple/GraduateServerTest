@@ -78,7 +78,7 @@ router.post('/receive',(req,res)=>{
   var req_user_id = req.body.opponent_id;
 console.log(`res = ` + res_user_id + `req = `+req_user_id+ '친구 수락하기')
   utils.dbConnect(res).then((conn)=>{
-    utils.query(conn,res,'UPDATE user_relations SET relation_status = 1 WHERE req_user_id = ?, res_user_id =?',[req_user_id,res_user_id])
+    utils.query(conn,res,'UPDATE user_relations SET relation_status = 1 WHERE req_user_id = ? AND res_user_id =?',[req_user_id,res_user_id])
     .then((result)=>{
       conn.release();
       res.json(utils.SUCCESS);
@@ -98,7 +98,7 @@ router.get('/receive',(req,res)=>{
        ON ur.req_user_id = u.user_id
        WHERE ur.res_user_id = ? AND ur.relation_status = 0`,[res_user_id])
     .then((result)=>{
-      
+
       if(result.length === 0){
       	conn.release();
 	  res.json({
