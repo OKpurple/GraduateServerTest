@@ -43,6 +43,7 @@ router.get('/friend', (req, res) => {
     var user_id = req.authorizationId
     var latitude = req.query.lat;
     var longitude = req.query.lng;
+    var search_time = utils.getTimeStamp();
     console.log("contents/friend 친구글 보기");
 
     //위치 업데이트
@@ -61,8 +62,7 @@ router.get('/friend', (req, res) => {
                           FROM user_relations ur,user_info u, pagenation pn,contents c
                           LEFT OUTER JOIN content_like cl
                           ON cl.user_id = ? && cl.content_id = c.content_id
-                          WHERE c.user_id = my.friend AND c.user_id = u.user_id AND c.user_id != ? AND c.create_at < pn.search_time
-                          ORDER BY c.create_at DESC, c.content_id DESC LIMIT 0, 29`, [user_id, user_id, user_id, user_id])
+                          WHERE c.user_id = my AND c.user_id = u.user_id AND c.user_id != ? && c.create_at < pn.search_time ORDER BY c.create_at DESC, c.content_id DESC LIMIT 0, 29`, [user_id, user_id, user_id, user_id,user_id])
                         .then(aroundResult => {
                             if (aroundResult.length === 0) {
                                 connection.release();

@@ -92,15 +92,16 @@ router.get('/receive',(req,res)=>{
   console.log(res_user_id + '가 친구 받은목록')
   utils.dbConnect(res).then((conn)=>{
     utils.query(conn,res,
-      `SELECT ur.req_user_id, u.user_name, u.profile
-       FROM user_relations uro
+      `SELECT ur.req_user_id, u.user_name, u.profile_dir
+       FROM user_relations ur
        LEFT OUTER JOIN user_info u
        ON ur.req_user_id = u.user_id
        WHERE ur.res_user_id = ? AND ur.relation_status = 0`,[res_user_id])
     .then((result)=>{
-      conn.release();
+      
       if(result.length === 0){
-        res.json({
+      	conn.release();
+	  res.json({
           meta : {
             code : 202,
             message : "none"
