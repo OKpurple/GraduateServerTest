@@ -58,10 +58,10 @@ router.get('/friend', (req, res) => {
                             `SELECT c.*, u.user_name, u.profile_dir,u.login_id, ifnull(cl.is_like,0) AS is_like
                           FROM (SELECT IF(ur.res_user_id = ?, ur.req_user_id, ur.res_user_id) as friend
                              FROM user_relations ur
-                             WHERE relation_status = 1 AND ur.res_user_id = ? OR ur.req_user_id = ?) my, user_relations ur,user_info u, pagenation pn,contents c
+                             WHERE relation_status = 1 AND ur.res_user_id = ? OR ur.req_user_id = ?) myf, user_relations ur,user_info u, pagenation pn,contents c
                           LEFT OUTER JOIN content_like cl
                           ON cl.user_id = ? && cl.content_id = c.content_id
-                          WHERE c.user_id = my AND c.user_id = u.user_id AND c.user_id != ? && c.create_at < pn.search_time ORDER BY c.create_at DESC, c.content_id DESC LIMIT 0, 29`, [user_id, user_id, user_id, user_id,user_id])
+                          WHERE c.user_id = myf.friend AND c.user_id = u.user_id AND c.user_id != ? && c.create_at < pn.search_time ORDER BY c.create_at DESC, c.content_id DESC LIMIT 0, 29`, [user_id, user_id, user_id, user_id,user_id])
                         .then(aroundResult => {
                             if (aroundResult.length === 0) {
                                 connection.release();
