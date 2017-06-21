@@ -127,3 +127,9 @@ var chars = "23456789ABCDEFGHJKLMNPQRSTUVWXTZabcdefghkmnopqrstuvwxyz";
   }
   return randomstring;
 }
+
+
+var isDateFormat = (d) => {
+    var df = /[0-9]{4}-[0-9]{2}-[0-9]{2}/;
+    return d.match(df);
+}
