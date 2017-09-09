@@ -113,23 +113,3 @@ function leadingZeros(n, digits) {
   }
   return zero + n;
 }
-
-var LOGIN_ID_REGEXP = /^(?=.*[a-zA-Z])(?=.*[0-9])[a-zA-Z0-9]{6,16}$/;
-var EMAIL_REGEXP = /^[0-9a-zA-Z]([\-.\w]*[0-9a-zA-Z\-_+])*@([0-9a-zA-Z][\-\w]*[0-9a-zA-Z]\.)+[a-zA-Z]{2,20}$/;
-var PASSWORD_REGEXP = /^[A-Za-z0-9]{6,16}$/;
-
-var randomString = (length) => {
-var chars = "23456789ABCDEFGHJKLMNPQRSTUVWXTZabcdefghkmnopqrstuvwxyz";
-  var randomstring = '';
-  for (var i=0; i<length; i++) {
-      var rnum = Math.floor(Math.random() * chars.length);
-      randomstring += chars.substring(rnum,rnum+1);
-  }
-  return randomstring;
-}
-
-
-var isDateFormat = (d) => {
-    var df = /[0-9]{4}-[0-9]{2}-[0-9]{2}/;
-    return d.match(df);
-}

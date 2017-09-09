@@ -61,7 +61,8 @@ router.get('/friend', (req, res) => {
                              WHERE relation_status = 1 AND (ur.res_user_id = ? OR ur.req_user_id = ?)) myf, user_info u, pagenation pn,contents c
                           LEFT OUTER JOIN content_like cl
                           ON cl.user_id = ? && cl.content_id = c.content_id
-                          WHERE (c.user_id = myf.friend  AND u.user_id = c.user_id AND c.user_id != ? AND c.create_at < pn.search_time ) ORDER BY c.create_at DESC, c.content_id DESC LIMIT 0, 29`, [user_id, user_id, user_id, user_id,user_id])
+                          WHERE (c.user_id = myf.friend  AND u.user_id = c.user_id AND c.user_id != ? AND pn.user_id = ? AND c.create_at < pn.search_time ) ORDER BY c.create_at DESC, c.content_id DESC LIMIT 0, 29`
+                          , [user_id, user_id, user_id, user_id,user_id, user_id])
                         .then(aroundResult => {
                             if (aroundResult.length === 0) {
                                 connection.release();
@@ -109,8 +110,8 @@ console.log("contents/around/page/:pagecnt  페이지네이션")
                     user_info u, pagenation pn,contents c
                     LEFT OUTER JOIN content_like cl
                     ON cl.user_id = ? && cl.content_id = c.content_id
-                    WHERE c.user_id = up.user_id AND c.user_id = u.user_id AND c.user_id != ? AND c.create_at < pn.search_time
-                    ORDER BY c.create_at DESC, c.content_id DESC LIMIT ?, ?`, [user_id, latitude, longitude, latitude, user_id, user_id, startPage, endPage])
+                    WHERE c.user_id = up.user_id AND c.user_id = u.user_id AND c.user_id != ? AND pn.user_id = ? AND c.create_at < pn.search_time
+                    ORDER BY c.create_at DESC, c.content_id DESC LIMIT ?, ?`, [user_id, latitude, longitude, latitude, user_id, user_id,user_id ,startPage, endPage])
                     .then(aroundResult => {
                         if (aroundResult.length === 0) {
                             connection.release();
@@ -226,8 +227,8 @@ router.get('/around', (req, res) => {
                             user_info u, pagenation pn,contents c
                             LEFT OUTER JOIN content_like cl
                             ON cl.user_id = ? && cl.content_id = c.content_id
-                            WHERE c.user_id = up.user_id AND c.user_id = u.user_id AND  c.create_at < pn.search_time
-                            ORDER BY c.create_at DESC, c.content_id DESC LIMIT 0, 29`, [latitude, longitude, latitude, user_id])
+                            WHERE c.user_id = up.user_id AND c.user_id = u.user_id AND pn.user_id = ? AND c.create_at < pn.search_time
+                            ORDER BY c.create_at DESC, c.content_id DESC LIMIT 0, 29`, [latitude, longitude, latitude, user_id,user_id])
                         .then(aroundResult => {
                             connection.release();
                             if (aroundResult.length === 0) {
